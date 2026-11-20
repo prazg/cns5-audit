@@ -114,10 +114,7 @@ CNS5-Audit is engineered from first principles for privacy-conscious clinical re
 
 ## Quick Start
 
-### Option 1: Open Live on GitHub Pages
-Visit the repository's deployed **GitHub Pages** site in any modern browser (Chromium, Firefox, Safari, or Edge). No installation, login, or build step is needed.
-
-### Option 2: Run Locally (Zero Build Step)
+### Option 1: Run Locally (Zero Build Step)
 Because modern browsers block native ES Modules (`<script type="module">`) and relative `fetch('./data/*.json')` requests over the `file://` protocol, serve the repository with any lightweight local HTTP server (such as Python's built-in module):
 
 ```bash
@@ -128,7 +125,7 @@ python -m http.server 8000
 
 Then open **http://localhost:8000** in your browser. *(If `index.html` is opened directly via `file://`, the app automatically displays a helpful inline notice with this exact command.)*
 
-### Option 3: Run Automated Verification Locally
+### Option 2: Run Automated Verification Locally
 Validate all clinical rule schemas, Arabic-grade compliance, 36-item CLAIM 2024 / TRIPOD+AI mappings, Python scoring oracle parity, ES module export/import contracts, pure-logic DOM isolation, and zero-CDN offline hygiene using **Python 3.12 standard library only** (zero `pip install` required):
 
 ```bash
@@ -169,13 +166,6 @@ cns5-audit/
     └── verify_rules.py           # Python 3.12 stdlib verification & golden-vector contract suite
 ```
 
-### Automated Verification & GitHub Pages Deployment
-The workflow in [`.github/workflows/pages.yml`](.github/workflows/pages.yml) enforces open-science quality automatically:
-1. **`verify` job (every `push` and `pull_request` to `main`):** Checks out the repository on `ubuntu-latest`, provisions Python 3.12, and executes `python tests/verify_rules.py`. Any schema regression, external CDN leak, DOM reference inside a pure engine, or scoring mismatch fails the build.
-2. **`deploy` job (`main` pushes & manual `workflow_dispatch` only, gated on `needs: verify`):** Stages the clean zero-build static assets (`index.html`, `css/`, `js/`, `data/`, `.nojekyll`) and deploys directly to GitHub Pages via official `actions/configure-pages`, `actions/upload-pages-artifact`, and `actions/deploy-pages`.
-
----
-
 ## Primary Literature References
 
 All clinical classification rules, volumetric response criteria, and neuro-AI reporting audit mappings are grounded directly in the following primary consensus publications:
@@ -195,7 +185,7 @@ All clinical classification rules, volumetric response criteria, and neuro-AI re
 
 - **Cite CNS5-Audit:** Use GitHub's **"Cite this repository"** menu or see [`CITATION.cff`](CITATION.cff) (Citation File Format 1.2.0).
 - **Contribute:** See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`ARCHITECTURE.md`](ARCHITECTURE.md) for clinical evidence standards, pure-logic contracts, and pull request verification steps.
-- **License:** Released under the [MIT License](LICENSE) (Copyright (c) 2026 CNS5-Audit Contributors).
+- **License:** Released under the [MIT License](LICENSE) (Copyright (c) 2026 Prajwal Ghimire).
 
 ---
 
