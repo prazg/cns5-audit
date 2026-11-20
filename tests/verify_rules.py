@@ -551,19 +551,19 @@ def calculate_rano_bm_reference(p: dict[str, Any]) -> tuple[str, bool]:
     non_cns = p.get("nonCnsStatus", "not_applicable")
 
     abs_chg = curr - nadir
-    pct_nadir = ((curr - nadir) / nadir) * 100.0 if nadir > 0 else (math.inf if curr > 0 else 0.0)
-    pct_base = ((curr - base) / base) * 100.0 if base > 0 else None
+    pct_nadir = ((curr - nadir) / nadir) * 100.0 if nadir > eps else (math.inf if curr > eps else 0.0)
+    pct_base = ((curr - base) / base) * 100.0 if base > eps else None
 
     is_pd = (
-        (nadir > 0 and pct_nadir >= 20.0 - eps and abs_chg >= 5.0 - eps)
-        or (nadir == 0 and curr > eps)
+        (nadir > eps and pct_nadir >= 20.0 - eps and abs_chg >= 5.0 - eps)
+        or (nadir <= eps and curr > eps)
         or bool(p.get("newCnsLesion"))
         or bool(p.get("nonTargetCnsProgression"))
         or neuro == "worse"
     )
     if is_pd:
         cns = "PD"
-    elif base == 0:
+    elif base <= eps:
         cns = "SD" if p.get("nonTargetCnsPresent") else "Non-PD"
     elif curr <= eps and not p.get("nonTargetCnsPresent") and not p.get("newCnsLesion"):
         if steroids == "none_or_physiologic":
@@ -950,6 +950,16 @@ if (modules.rano) {
   assertEq(bmLesions.targetLesionCount, 5, "RANO-BM caps target lesions at 5");
   assertEq(bmLesions.baselineSldMm, 56, "RANO-BM sums first 5 target lesions (12+8+15+10+11=56)");
   assert(bmLesions.warnings.length >= 3, "RANO-BM emits >5 cap, <10mm measurability, and prior SRS warnings");
+
+  const bmBaseEpsGuard = calculateRanoBm({
+    baselineSldMm: 1e-12,
+    nadirSldMm: 1e-12,
+    currentSldMm: 1e-12,
+    corticosteroids: "none_or_physiologic",
+    neurologicStatus: "stable_or_improved"
+  });
+  assertEq(bmBaseEpsGuard.cnsResponseCode, "Non-PD", "RANO-BM sub-epsilon baseline<=EPS triggers Non-PD guard (never CR)");
+  assertEq(bmBaseEpsGuard.baselineGuardTriggered, true, "RANO-BM sub-epsilon baselineGuardTriggered=true");
 
   // 1G. RANO-Resect Golden Vectors 6, 7, 8 + All Class Boundaries
   const resNa = calculateRanoResect({ preOpCeVolCm3: 0, postOpCeVolCm3: 0 });
@@ -2314,6 +2324,13 @@ class TestPythonReferenceParityClinicalRules(unittest.TestCase):
             }),
             ("PR", True),
         )
+        # Sub-epsilon baseline=0 CR guard consistency
+        self.assertEqual(
+            calculate_rano_bm_reference({
+                "baselineSldMm": 1e-12, "nadirSldMm": 1e-12, "currentSldMm": 1e-12,
+            }),
+            ("Non-PD", False),
+        )
         # RANO-Resect Karschnia 2023 hierarchy
         self.assertEqual(calculate_rano_resect_reference({"preOpCeVolCm3": 0, "postOpCeVolCm3": 0}), "N/A")
         self.assertEqual(calculate_rano_resect_reference({"preOpCeVolCm3": 3.0, "postOpCeVolCm3": 2.8}), "Class 4")
@@ -2353,6 +2370,11 @@ class TestLiveJavaScriptEngines(unittest.TestCase):
 
     def test_app_ui_static_contracts(self) -> None:
         app_js = (ROOT / "js" / "app.js").read_text(encoding="utf-8")
+        index_html = (ROOT / "index.html").read_text(encoding="utf-8")
+        styles_css = (ROOT / "css" / "styles.css").read_text(encoding="utf-8")
+        pages_yml = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
+
+        self.assertIn("python tests/verify_rules.py --skip-browser", pages_yml)
         self.assertIn("syncAuditSeverityFilterCounts", app_js)
         self.assertGreaterEqual(
             app_js.count("spdRes.lesionProducts.find((p) => p.index === idx + 1)"),
@@ -2360,6 +2382,23 @@ class TestLiveJavaScriptEngines(unittest.TestCase):
             "Both renderRano2SpdHelperInner and updateRano2SpdReadoutOnly must look up lesionProducts by 1-based prod.index",
         )
         self.assertIn("rano2-spd-warnings", app_js)
+        self.assertIn("wireTablistKeyboard", app_js)
+        self.assertIn("renderAuditProgressQuickbar", app_js)
+        self.assertIn("renderPrintSummarySheet", app_js)
+
+        for required_id in (
+            "print-summary-btn",
+            "print-summary-sheet",
+            "audit-progress-bar",
+            "audit-next-unanswered-btn",
+            "audit-jump-blockers-btn",
+            "audit-domain-progress-pills",
+        ):
+            self.assertIn(f'id="{required_id}"', index_html, f"Missing #{required_id} in index.html")
+
+        self.assertIn("@media print", styles_css)
+        self.assertIn(".print-sheet", styles_css)
+
         cns5_js = (ROOT / "js" / "cns5Engine.js").read_text(encoding="utf-8")
         self.assertNotIn("anaplastic PXA", cns5_js)
 

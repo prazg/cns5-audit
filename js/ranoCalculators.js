@@ -983,13 +983,13 @@ export function calculateRanoBm(params) {
 
   const rawAbsChangeMm = currentSldMm - nadirRef;
   const rawPctBaseline =
-    baselineSldMm > 0
+    baselineSldMm > EPS
       ? ((currentSldMm - baselineSldMm) / baselineSldMm) * 100
       : null;
   const rawPctNadir =
-    nadirRef > 0
+    nadirRef > EPS
       ? ((currentSldMm - nadirRef) / nadirRef) * 100
-      : currentSldMm > 0
+      : currentSldMm > EPS
         ? Infinity
         : 0;
 
@@ -1012,9 +1012,9 @@ export function calculateRanoBm(params) {
   }
 
   // Evaluate CNS PD criteria strictly independently of non-CNS disease
-  const pctGte20 = nadirRef > 0 && rawPctNadir >= 20 - EPS;
+  const pctGte20 = nadirRef > EPS && rawPctNadir >= 20 - EPS;
   const absGte5mm = rawAbsChangeMm >= 5 - EPS;
-  const reappearanceFromZero = nadirRef === 0 && currentSldMm > EPS;
+  const reappearanceFromZero = nadirRef <= EPS && currentSldMm > EPS;
   const neuroWorse = neurologicStatus === "worse";
 
   const pdCriteriaMet = {
@@ -1066,7 +1066,7 @@ export function calculateRanoBm(params) {
         "Unequivocal CNS neurological deterioration attributable to intracranial tumor."
       );
     }
-  } else if (baselineSldMm === 0) {
+  } else if (baselineSldMm <= EPS) {
     baselineGuardTriggered = true;
     if (!nonTargetCnsPresent) {
       cnsResponseCode = "Non-PD";
@@ -1352,6 +1352,16 @@ export function calculateRanoResect(params) {
       : null;
   const nonCeReductionPct =
     rawNonCeReductionPct !== null ? round1(rawNonCeReductionPct) : null;
+
+  if (
+    preOpNonCeVolCm3 !== null &&
+    postOpNonCeVolCm3 !== null &&
+    postOpNonCeVolCm3 > preOpNonCeVolCm3 + EPS
+  ) {
+    warnings.push(
+      `Post-operative residual non-CE/FLAIR volume (${round1(postOpNonCeVolCm3)} cm³) exceeds pre-operative non-CE volume (${round1(preOpNonCeVolCm3)} cm³); distinguish acute surgical edema or ischemia from residual infiltrative FLAIR tumor.`
+    );
+  }
 
   // Step 2: Explicit N/A Guard when pre-op CE volume is 0
   if (preOpCeVolCm3 <= EPS) {

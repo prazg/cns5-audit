@@ -598,10 +598,56 @@ const appState = {
     query: ""
   },
   auditPreviewFormat: "md",
+  lastUnansweredJumpId: null,
+  lastBlockerJumpId: null,
   lastCns5Result: null,
   lastRanoResult: null,
   lastAuditScore: null
 };
+
+/* ==========================================================================
+   Accessible Tablist Keyboard Navigation Helper
+   ========================================================================== */
+
+function wireTablistKeyboard(tablistEl, onActivateTab) {
+  if (!tablistEl) return;
+  tablistEl.addEventListener("keydown", (e) => {
+    const currentTab = e.target.closest('[role="tab"]');
+    if (!currentTab || !tablistEl.contains(currentTab)) return;
+
+    const tabs = Array.from(tablistEl.querySelectorAll('[role="tab"]:not([disabled])'));
+    if (tabs.length === 0) return;
+
+    const currentIdx = tabs.indexOf(currentTab);
+    if (currentIdx < 0) return;
+
+    let nextIdx = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      nextIdx = (currentIdx + 1) % tabs.length;
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+    } else if (e.key === "Home") {
+      nextIdx = 0;
+    } else if (e.key === "End") {
+      nextIdx = tabs.length - 1;
+    }
+
+    if (nextIdx >= 0) {
+      e.preventDefault();
+      const nextTab = tabs[nextIdx];
+      onActivateTab(nextTab, nextIdx);
+      // Query fresh active tab in case DOM inside tablistEl was re-rendered
+      const refreshedTabs = Array.from(tablistEl.querySelectorAll('[role="tab"]:not([disabled])'));
+      const focusTarget =
+        refreshedTabs.find((t) => t.getAttribute("aria-selected") === "true") ||
+        refreshedTabs[nextIdx] ||
+        nextTab;
+      if (focusTarget && typeof focusTarget.focus === "function") {
+        focusTarget.focus();
+      }
+    }
+  });
+}
 
 /* ==========================================================================
    Theme & Top-Level Tab Navigation
@@ -644,6 +690,7 @@ function switchPrimaryTab(tabName, persist = true) {
     const active = btn.dataset.tab === target;
     btn.classList.toggle("is-active", active);
     btn.setAttribute("aria-selected", String(active));
+    btn.setAttribute("tabindex", active ? "0" : "-1");
   });
 
   document.querySelectorAll(".tab-panel").forEach((panel) => {
@@ -662,12 +709,14 @@ function updateMobileSummaryStrip() {
   let leftText = "";
   let badgeText = "";
   let badgeClass = "count-pill";
+  let jumpTargetId = "cns5-diagnosis-card";
 
   if (appState.activeTab === "cns5" && appState.lastCns5Result) {
     const r = appState.lastCns5Result;
     leftText = r.diagnosis;
     badgeText = r.cnsWhoGrade === "Not assigned" ? "Grade N/A" : `WHO Grade ${r.cnsWhoGrade}`;
-    badgeClass = `count-pill`;
+    badgeClass = "count-pill";
+    jumpTargetId = "cns5-diagnosis-card";
   } else if (appState.activeTab === "rano" && appState.lastRanoResult) {
     const sub = appState.rano.activeSubTab;
     const r = appState.lastRanoResult;
@@ -681,16 +730,21 @@ function updateMobileSummaryStrip() {
       leftText = `RANO-Resect: ${r.className}`;
       badgeText = r.resectClass;
     }
+    jumpTargetId = "rano-result-card";
   } else if (appState.activeTab === "audit" && appState.lastAuditScore) {
     const s = appState.lastAuditScore;
     leftText = `Neuro-AI Rigor: ${s.leakageRiskLevel}${s.capApplied ? " (Capped)" : ""}`;
     badgeText = `${s.overallScore}/100`;
+    jumpTargetId = "audit-scorecard";
   }
 
   strip.innerHTML = `
     <div class="mobile-summary-strip__inner">
       <span class="mobile-summary-strip__label">${escapeHtml(leftText || "CNS5-Audit Studio")}</span>
-      <span class="${badgeClass}">${escapeHtml(badgeText || "Ready")}</span>
+      <span class="mobile-summary-strip__right">
+        <span class="${badgeClass}">${escapeHtml(badgeText || "Ready")}</span>
+        <button type="button" class="btn btn--secondary btn--xs" data-mobile-jump="${escapeHtml(jumpTargetId)}">Output &darr;</button>
+      </span>
     </div>
   `;
 }
@@ -765,18 +819,27 @@ function renderCns5FamilySelector() {
   const container = document.getElementById("cns5-family-selector");
   if (!container) return;
 
+  const activeFam = appState.cns5.activeFamily;
+  const panelEl = document.getElementById("cns5-family-panel");
+  if (panelEl) {
+    panelEl.setAttribute("aria-labelledby", `cns5-family-tab-${activeFam}`);
+  }
+
   container.innerHTML = CNS5_FAMILIES.map((familyId) => {
     const meta = getCns5FamilyMeta(familyId);
-    const isActive = familyId === appState.cns5.activeFamily;
+    const isActive = familyId === activeFam;
     const entityCountLabel = meta.entities.length > 0
       ? `${meta.entities.length} ${meta.entities.length === 1 ? "entity" : "entities"}`
       : "WHO CNS5";
     return `
       <button
         type="button"
+        id="cns5-family-tab-${escapeHtml(familyId)}"
         class="family-card${isActive ? " is-active" : ""}"
         role="tab"
         aria-selected="${String(isActive)}"
+        aria-controls="cns5-family-panel"
+        tabindex="${isActive ? "0" : "-1"}"
         data-family-id="${escapeHtml(familyId)}"
       >
         <span class="family-card__title">${escapeHtml(meta.shortLabel)}</span>
@@ -1113,18 +1176,16 @@ function wireCns5Events() {
       renderCns5FamilySelector();
       renderCns5Form();
       renderCns5Outputs();
+      const nextChip = vigContainer.querySelector(`[data-vignette-id="${CSS.escape(vig.id)}"]`);
+      if (nextChip) nextChip.focus();
       showToast(`Loaded vignette: ${vig.label}`);
     });
   }
 
   const famContainer = document.getElementById("cns5-family-selector");
   if (famContainer) {
-    famContainer.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-family-id]");
-      if (!btn) return;
-      const famId = btn.dataset.familyId;
+    const activateCns5Family = (famId, restoreFocus = false) => {
       if (!CNS5_FAMILIES.includes(famId)) return;
-
       appState.cns5.activeFamily = famId;
       appState.cns5.activeVignetteId = null;
       if (!appState.cns5.inputsByFamily[famId]) {
@@ -1135,6 +1196,20 @@ function wireCns5Events() {
       renderCns5FamilySelector();
       renderCns5Form();
       renderCns5Outputs();
+      if (restoreFocus) {
+        const nextBtn = famContainer.querySelector(`[data-family-id="${CSS.escape(famId)}"]`);
+        if (nextBtn) nextBtn.focus();
+      }
+    };
+
+    famContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-family-id]");
+      if (!btn) return;
+      activateCns5Family(btn.dataset.familyId, true);
+    });
+
+    wireTablistKeyboard(famContainer, (nextTab) => {
+      activateCns5Family(nextTab.dataset.familyId, false);
     });
   }
 
@@ -1219,10 +1294,15 @@ function persistRanoState() {
 
 function renderRanoSubTabs() {
   const active = appState.rano.activeSubTab;
+  const subpanel = document.getElementById("rano-subpanel");
+  if (subpanel) {
+    subpanel.setAttribute("aria-labelledby", `rano-tab-${active}`);
+  }
   document.querySelectorAll("[data-rano-tab]").forEach((btn) => {
     const isAct = btn.dataset.ranoTab === active;
     btn.classList.toggle("is-active", isAct);
     btn.setAttribute("aria-selected", String(isAct));
+    btn.setAttribute("tabindex", isAct ? "0" : "-1");
   });
 }
 
@@ -1279,30 +1359,51 @@ function buildRano2SpdNoticesHtml(spdRes) {
   return parts.join("");
 }
 
+function isInvalidRanoNum(val, nullable = false) {
+  if (nullable && (val === null || val === undefined || val === "")) return false;
+  if (val === null || val === undefined || val === "") return true;
+  const n = Number(val);
+  return !Number.isFinite(n) || n < 0;
+}
+
+function syncInputValidityAttr(inputEl, isInvalid) {
+  if (!inputEl) return;
+  inputEl.classList.toggle("is-invalid", Boolean(isInvalid));
+  if (isInvalid) {
+    inputEl.setAttribute("aria-invalid", "true");
+  } else {
+    inputEl.removeAttribute("aria-invalid");
+  }
+}
+
 function renderRano2SpdHelperInner() {
   const bodyEl = document.getElementById("rano2-spd-helper-body");
   if (!bodyEl) return;
   const lesions = appState.rano.rano2Lesions || [];
   const spdRes = computeSpdFromLesions(lesions);
 
-  const rowsHtml = lesions.map((les, idx) => {
-    const prod = spdRes.lesionProducts.find((p) => p.index === idx + 1);
-    const areaTxt = prod ? `${prod.areaMm2} mm²` : "—";
-    const measBadge = prod
-      ? (prod.measurable
-        ? `<span class="mono-tag" style="color:var(--status-pass)">≥10×10</span>`
-        : `<span class="mono-tag" style="color:var(--status-warn)">&lt;10mm</span>`)
-      : "";
-    return `
-      <tr>
-        <td><input type="text" class="input" data-spd-idx="${idx}" data-spd-field="label" value="${escapeHtml(les.label || `Target #${idx + 1}`)}" aria-label="Lesion ${idx + 1} label"></td>
-        <td><input type="number" step="any" min="0" class="input input--mono" data-spd-idx="${idx}" data-spd-field="longMm" value="${escapeHtml(formatInputNum(les.longMm))}" aria-label="Lesion ${idx + 1} longest diameter in mm"></td>
-        <td><input type="number" step="any" min="0" class="input input--mono" data-spd-idx="${idx}" data-spd-field="perpMm" value="${escapeHtml(formatInputNum(les.perpMm))}" aria-label="Lesion ${idx + 1} perpendicular diameter in mm"></td>
-        <td class="tabular">${escapeHtml(areaTxt)} ${measBadge}</td>
-        <td><button type="button" class="btn btn--ghost btn--xs" data-spd-remove="${idx}" aria-label="Remove lesion ${idx + 1}">&times;</button></td>
-      </tr>
-    `;
-  }).join("");
+  const rowsHtml = lesions.length === 0
+    ? `<tr><td colspan="5" class="card__subtitle" style="text-align:center;padding:0.75rem">No lesions in helper — click "+ Add Lesion" to compute 2D SPD.</td></tr>`
+    : lesions.map((les, idx) => {
+      const prod = spdRes.lesionProducts.find((p) => p.index === idx + 1);
+      const areaTxt = prod ? `${prod.areaMm2} mm²` : "—";
+      const measBadge = prod
+        ? (prod.measurable
+          ? `<span class="mono-tag" style="color:var(--status-pass)">≥10×10</span>`
+          : `<span class="mono-tag" style="color:var(--status-warn)">&lt;10mm</span>`)
+        : "";
+      const longInv = isInvalidRanoNum(les.longMm, false);
+      const perpInv = isInvalidRanoNum(les.perpMm, false);
+      return `
+        <tr>
+          <td><input type="text" class="input" data-spd-idx="${idx}" data-spd-field="label" value="${escapeHtml(les.label || `Target #${idx + 1}`)}" aria-label="Lesion ${idx + 1} label"></td>
+          <td><input type="number" step="any" min="0" class="input input--mono${longInv ? " is-invalid" : ""}"${longInv ? ' aria-invalid="true"' : ""} data-spd-idx="${idx}" data-spd-field="longMm" value="${escapeHtml(formatInputNum(les.longMm))}" aria-label="Lesion ${idx + 1} longest diameter in mm"></td>
+          <td><input type="number" step="any" min="0" class="input input--mono${perpInv ? " is-invalid" : ""}"${perpInv ? ' aria-invalid="true"' : ""} data-spd-idx="${idx}" data-spd-field="perpMm" value="${escapeHtml(formatInputNum(les.perpMm))}" aria-label="Lesion ${idx + 1} perpendicular diameter in mm"></td>
+          <td class="tabular">${escapeHtml(areaTxt)} ${measBadge}</td>
+          <td><button type="button" class="btn btn--ghost btn--xs" data-spd-remove="${idx}" aria-label="Remove lesion ${idx + 1}">&times;</button></td>
+        </tr>
+      `;
+    }).join("");
 
   const noticesHtml = buildRano2SpdNoticesHtml(spdRes);
 
@@ -1324,14 +1425,14 @@ function renderRano2SpdHelperInner() {
     <div id="rano2-spd-warnings">${noticesHtml}</div>
     <div class="spd-helper__footer">
       <div>
-        <strong class="tabular">Computed SPD: ${spdRes.valid ? `${escapeHtml(spdRes.spdMm2)} mm²` : "—"}</strong>
+        <strong class="tabular">Computed SPD: ${lesions.length > 0 && spdRes.valid ? `${escapeHtml(spdRes.spdMm2)} mm²` : "—"}</strong>
         <span class="card__subtitle"> (${spdRes.measurableCount}/${spdRes.totalLesionsEvaluated} measurable)</span>
       </div>
       <div class="btn-group">
         <button type="button" class="btn btn--secondary btn--xs" data-spd-action="add">+ Add Lesion</button>
-        <button type="button" class="btn btn--secondary btn--xs" data-spd-apply="baselineValue">Apply to Baseline</button>
-        <button type="button" class="btn btn--secondary btn--xs" data-spd-apply="nadirValue">Apply to Nadir</button>
-        <button type="button" class="btn btn--primary btn--xs" data-spd-apply="currentValue">Apply to Current</button>
+        <button type="button" class="btn btn--secondary btn--xs" data-spd-apply="baselineValue"${lesions.length === 0 ? " disabled" : ""}>Apply to Baseline</button>
+        <button type="button" class="btn btn--secondary btn--xs" data-spd-apply="nadirValue"${lesions.length === 0 ? " disabled" : ""}>Apply to Nadir</button>
+        <button type="button" class="btn btn--primary btn--xs" data-spd-apply="currentValue"${lesions.length === 0 ? " disabled" : ""}>Apply to Current</button>
       </div>
     </div>
   `;
@@ -1390,15 +1491,15 @@ function renderRanoForm() {
         <div class="rano-toggle-group">
           <span class="field__label">Tumor Track</span>
           <div class="segmented-control" role="group" aria-label="RANO 2.0 tumor track">
-            <button type="button" class="segmented-control__btn${p.tumorMode === "enhancing_hgg" ? " is-active" : ""}" data-r2-set="tumorMode" data-r2-val="enhancing_hgg">Enhancing / HGG</button>
-            <button type="button" class="segmented-control__btn${p.tumorMode === "non_enhancing_lgg" ? " is-active" : ""}" data-r2-set="tumorMode" data-r2-val="non_enhancing_lgg">Non-Enhancing / LGG</button>
+            <button type="button" class="segmented-control__btn${p.tumorMode === "enhancing_hgg" ? " is-active" : ""}" aria-pressed="${String(p.tumorMode === "enhancing_hgg")}" data-r2-set="tumorMode" data-r2-val="enhancing_hgg">Enhancing / HGG</button>
+            <button type="button" class="segmented-control__btn${p.tumorMode === "non_enhancing_lgg" ? " is-active" : ""}" aria-pressed="${String(p.tumorMode === "non_enhancing_lgg")}" data-r2-set="tumorMode" data-r2-val="non_enhancing_lgg">Non-Enhancing / LGG</button>
           </div>
         </div>
         <div class="rano-toggle-group">
           <span class="field__label">Measurement Modality</span>
           <div class="segmented-control" role="group" aria-label="RANO 2.0 measurement modality">
-            <button type="button" class="segmented-control__btn${p.measurementType === "2d_spd" ? " is-active" : ""}" data-r2-set="measurementType" data-r2-val="2d_spd">2D SPD (mm²)</button>
-            <button type="button" class="segmented-control__btn${p.measurementType === "3d_volume" ? " is-active" : ""}" data-r2-set="measurementType" data-r2-val="3d_volume">3D Volume (cm³)</button>
+            <button type="button" class="segmented-control__btn${p.measurementType === "2d_spd" ? " is-active" : ""}" aria-pressed="${String(p.measurementType === "2d_spd")}" data-r2-set="measurementType" data-r2-val="2d_spd">2D SPD (mm²)</button>
+            <button type="button" class="segmented-control__btn${p.measurementType === "3d_volume" ? " is-active" : ""}" aria-pressed="${String(p.measurementType === "3d_volume")}" data-r2-set="measurementType" data-r2-val="3d_volume">3D Volume (cm³)</button>
           </div>
         </div>
       </div>
@@ -1418,15 +1519,15 @@ function renderRanoForm() {
         <div class="field-grid">
           <label class="field">
             <span class="field__label">Baseline ${escapeHtml(unit)} (Post-RT for new HGG)</span>
-            <input type="number" step="any" min="0" class="input input--mono" data-r2-key="baselineValue" data-r2-type="number" value="${escapeHtml(formatInputNum(p.baselineValue))}">
+            <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.baselineValue, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.baselineValue, false) ? ' aria-invalid="true"' : ""} data-r2-key="baselineValue" data-r2-type="number" value="${escapeHtml(formatInputNum(p.baselineValue))}">
           </label>
           <label class="field">
             <span class="field__label">Nadir ${escapeHtml(unit)} (optional; defaults to baseline)</span>
-            <input type="number" step="any" min="0" class="input input--mono" data-r2-key="nadirValue" data-r2-type="nullable_number" value="${escapeHtml(formatInputNum(p.nadirValue))}" placeholder="Same as baseline">
+            <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.nadirValue, true) ? " is-invalid" : ""}"${isInvalidRanoNum(p.nadirValue, true) ? ' aria-invalid="true"' : ""} data-r2-key="nadirValue" data-r2-type="nullable_number" value="${escapeHtml(formatInputNum(p.nadirValue))}" placeholder="Same as baseline">
           </label>
           <label class="field field--span-2">
             <span class="field__label">Current Scan ${escapeHtml(unit)}</span>
-            <input type="number" step="any" min="0" class="input input--mono" data-r2-key="currentValue" data-r2-type="number" value="${escapeHtml(formatInputNum(p.currentValue))}">
+            <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.currentValue, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.currentValue, false) ? ' aria-invalid="true"' : ""} data-r2-key="currentValue" data-r2-type="number" value="${escapeHtml(formatInputNum(p.currentValue))}">
           </label>
         </div>
       </div>
@@ -1490,16 +1591,19 @@ function renderRanoForm() {
     const lesions = Array.isArray(p.targetLesions) ? p.targetLesions : [];
 
     const lesionRows = lesions.map((les, idx) => {
-      const sub10 = Number(les.baselineMm) > 0 && Number(les.baselineMm) < 10;
+      const sub10 = Number.isFinite(Number(les.baselineMm)) && Number(les.baselineMm) > 0 && Number(les.baselineMm) < 10;
+      const baseInv = isInvalidRanoNum(les.baselineMm, false);
+      const nadirInv = isInvalidRanoNum(les.nadirMm, true);
+      const currInv = isInvalidRanoNum(les.currentMm, false);
       return `
         <tr>
           <td><input type="text" class="input" data-bm-lesion-idx="${idx}" data-bm-lesion-field="label" value="${escapeHtml(les.label || `CNS Met #${idx + 1}`)}" aria-label="Lesion ${idx + 1} label"></td>
           <td>
-            <input type="number" step="any" min="0" class="input input--mono" data-bm-lesion-idx="${idx}" data-bm-lesion-field="baselineMm" value="${escapeHtml(formatInputNum(les.baselineMm))}" aria-label="Lesion ${idx + 1} baseline diameter mm">
-            ${sub10 ? `<span class="field__hint" style="color:var(--status-warn)">&lt;10mm</span>` : ""}
+            <input type="number" step="any" min="0" class="input input--mono${baseInv ? " is-invalid" : ""}"${baseInv ? ' aria-invalid="true"' : ""} data-bm-lesion-idx="${idx}" data-bm-lesion-field="baselineMm" value="${escapeHtml(formatInputNum(les.baselineMm))}" aria-label="Lesion ${idx + 1} baseline diameter mm">
+            <span class="field__hint bm-sub10-hint" style="color:var(--status-warn)"${sub10 ? "" : " hidden"}>&lt;10mm</span>
           </td>
-          <td><input type="number" step="any" min="0" class="input input--mono" data-bm-lesion-idx="${idx}" data-bm-lesion-field="nadirMm" value="${escapeHtml(formatInputNum(les.nadirMm))}" placeholder="Base" aria-label="Lesion ${idx + 1} nadir diameter mm"></td>
-          <td><input type="number" step="any" min="0" class="input input--mono" data-bm-lesion-idx="${idx}" data-bm-lesion-field="currentMm" value="${escapeHtml(formatInputNum(les.currentMm))}" aria-label="Lesion ${idx + 1} current diameter mm"></td>
+          <td><input type="number" step="any" min="0" class="input input--mono${nadirInv ? " is-invalid" : ""}"${nadirInv ? ' aria-invalid="true"' : ""} data-bm-lesion-idx="${idx}" data-bm-lesion-field="nadirMm" value="${escapeHtml(formatInputNum(les.nadirMm))}" placeholder="Base" aria-label="Lesion ${idx + 1} nadir diameter mm"></td>
+          <td><input type="number" step="any" min="0" class="input input--mono${currInv ? " is-invalid" : ""}"${currInv ? ' aria-invalid="true"' : ""} data-bm-lesion-idx="${idx}" data-bm-lesion-field="currentMm" value="${escapeHtml(formatInputNum(les.currentMm))}" aria-label="Lesion ${idx + 1} current diameter mm"></td>
           <td><button type="button" class="btn btn--ghost btn--xs" data-bm-remove-lesion="${idx}" aria-label="Remove lesion ${idx + 1}">&times;</button></td>
         </tr>
       `;
@@ -1519,8 +1623,8 @@ function renderRanoForm() {
         <div class="rano-toggle-group">
           <span class="field__label">Target Lesion Entry Mode</span>
           <div class="segmented-control" role="group" aria-label="RANO-BM input mode">
-            <button type="button" class="segmented-control__btn${mode === "lesions" ? " is-active" : ""}" data-bm-mode="lesions">Target Lesion Table (1–5)</button>
-            <button type="button" class="segmented-control__btn${mode === "sld" ? " is-active" : ""}" data-bm-mode="sld">Direct SLD Entry (mm)</button>
+            <button type="button" class="segmented-control__btn${mode === "lesions" ? " is-active" : ""}" aria-pressed="${String(mode === "lesions")}" data-bm-mode="lesions">Target Lesion Table (1–5)</button>
+            <button type="button" class="segmented-control__btn${mode === "sld" ? " is-active" : ""}" aria-pressed="${String(mode === "sld")}" data-bm-mode="sld">Direct SLD Entry (mm)</button>
           </div>
         </div>
       </div>
@@ -1552,15 +1656,15 @@ function renderRanoForm() {
           <div class="field-grid">
             <label class="field">
               <span class="field__label">Baseline SLD (mm)</span>
-              <input type="number" step="any" min="0" class="input input--mono" data-bm-key="baselineSldMm" data-bm-type="number" value="${escapeHtml(formatInputNum(p.baselineSldMm))}">
+              <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.baselineSldMm, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.baselineSldMm, false) ? ' aria-invalid="true"' : ""} data-bm-key="baselineSldMm" data-bm-type="number" value="${escapeHtml(formatInputNum(p.baselineSldMm))}">
             </label>
             <label class="field">
               <span class="field__label">Nadir SLD (mm, optional)</span>
-              <input type="number" step="any" min="0" class="input input--mono" data-bm-key="nadirSldMm" data-bm-type="nullable_number" value="${escapeHtml(formatInputNum(p.nadirSldMm))}" placeholder="Same as baseline">
+              <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.nadirSldMm, true) ? " is-invalid" : ""}"${isInvalidRanoNum(p.nadirSldMm, true) ? ' aria-invalid="true"' : ""} data-bm-key="nadirSldMm" data-bm-type="nullable_number" value="${escapeHtml(formatInputNum(p.nadirSldMm))}" placeholder="Same as baseline">
             </label>
             <label class="field field--span-2">
               <span class="field__label">Current SLD (mm)</span>
-              <input type="number" step="any" min="0" class="input input--mono" data-bm-key="currentSldMm" data-bm-type="number" value="${escapeHtml(formatInputNum(p.currentSldMm))}">
+              <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.currentSldMm, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.currentSldMm, false) ? ' aria-invalid="true"' : ""} data-bm-key="currentSldMm" data-bm-type="number" value="${escapeHtml(formatInputNum(p.currentSldMm))}">
             </label>
           </div>
         </div>
@@ -1639,12 +1743,12 @@ function renderRanoForm() {
       <div class="field-grid">
         <label class="field">
           <span class="field__label">Pre-Op CE Volume (cm³)</span>
-          <input type="number" step="any" min="0" class="input input--mono" data-res-key="preOpCeVolCm3" data-res-type="number" value="${escapeHtml(formatInputNum(p.preOpCeVolCm3))}">
+          <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.preOpCeVolCm3, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.preOpCeVolCm3, false) ? ' aria-invalid="true"' : ""} data-res-key="preOpCeVolCm3" data-res-type="number" value="${escapeHtml(formatInputNum(p.preOpCeVolCm3))}">
           <span class="field__hint">Set to 0 cm³ to trigger non-enhancing N/A guard</span>
         </label>
         <label class="field">
           <span class="field__label">Post-Op Residual CE Volume (cm³)</span>
-          <input type="number" step="any" min="0" class="input input--mono" data-res-key="postOpCeVolCm3" data-res-type="number" value="${escapeHtml(formatInputNum(p.postOpCeVolCm3))}">
+          <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.postOpCeVolCm3, false) ? " is-invalid" : ""}"${isInvalidRanoNum(p.postOpCeVolCm3, false) ? ' aria-invalid="true"' : ""} data-res-key="postOpCeVolCm3" data-res-type="number" value="${escapeHtml(formatInputNum(p.postOpCeVolCm3))}">
           <span class="field__hint">Class 1/2A: 0 · Class 2B: &le;1 · Class 3A: &le;5 · Class 3B: &gt;5</span>
         </label>
       </div>
@@ -1655,15 +1759,15 @@ function renderRanoForm() {
       <div class="field-grid">
         <label class="field">
           <span class="field__label">Pre-Op Non-CE / FLAIR Volume (cm³, optional)</span>
-          <input type="number" step="any" min="0" class="input input--mono" data-res-key="preOpNonCeVolCm3" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.preOpNonCeVolCm3))}" placeholder="Optional">
+          <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.preOpNonCeVolCm3, true) ? " is-invalid" : ""}"${isInvalidRanoNum(p.preOpNonCeVolCm3, true) ? ' aria-invalid="true"' : ""} data-res-key="preOpNonCeVolCm3" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.preOpNonCeVolCm3))}" placeholder="Optional">
         </label>
         <label class="field">
           <span class="field__label">Post-Op Residual Non-CE Volume (cm³, unlocks Class 1)</span>
-          <input type="number" step="any" min="0" class="input input--mono" data-res-key="postOpNonCeVolCm3" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.postOpNonCeVolCm3))}" placeholder="Required (≤5 cm³) for Class 1">
+          <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.postOpNonCeVolCm3, true) ? " is-invalid" : ""}"${isInvalidRanoNum(p.postOpNonCeVolCm3, true) ? ' aria-invalid="true"' : ""} data-res-key="postOpNonCeVolCm3" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.postOpNonCeVolCm3))}" placeholder="Required (≤5 cm³) for Class 1">
         </label>
         <label class="field">
           <span class="field__label">Post-Op MRI Timing (hours post-op, optional)</span>
-          <input type="number" step="any" min="0" class="input input--mono" data-res-key="postOpMriTimingHours" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.postOpMriTimingHours))}" placeholder="Ideal: 24–72 hours">
+          <input type="number" step="any" min="0" class="input input--mono${isInvalidRanoNum(p.postOpMriTimingHours, true) ? " is-invalid" : ""}"${isInvalidRanoNum(p.postOpMriTimingHours, true) ? ' aria-invalid="true"' : ""} data-res-key="postOpMriTimingHours" data-res-type="nullable_number" value="${escapeHtml(formatInputNum(p.postOpMriTimingHours))}" placeholder="Ideal: 24–72 hours">
           <span class="field__hint">Values &gt;72 hours flag reactive enhancement caution</span>
         </label>
         <div class="field" style="justify-content:flex-end">
@@ -1736,11 +1840,21 @@ function renderRanoOutputs() {
   const tierClass = `tier--${escapeHtml(result.severityTier || "neutral")}`;
 
   if (resultCard) {
+    const inlineErrorsHtml = !result.valid && Array.isArray(result.errors) && result.errors.length > 0
+      ? `
+        <div class="callout callout--upgrade" style="margin-top:0.75rem" role="alert">
+          <div class="callout__title">Input Validation Required</div>
+          <ul class="detail-list">${result.errors.map((err) => `<li>${escapeHtml(err)}</li>`).join("")}</ul>
+        </div>
+      `
+      : "";
+
     if (sub === "rano2") {
       const th = result.thresholds || {};
       const thSummary = th.mrPct !== null
         ? `PR ≤${th.prPct}% · MR ≤${th.mrPct}% · PD ≥+${th.pdPct}%`
         : `PR ≤${th.prPct}% · PD ≥+${th.pdPct}%`;
+      const nadirDisp = result.valid ? `${escapeHtml(result.nadirReference)} ${escapeHtml(result.unit)}` : "—";
       resultCard.innerHTML = `
         <div class="response-hero__top">
           <div>
@@ -1751,18 +1865,20 @@ function renderRanoOutputs() {
           <span class="response-pill ${tierClass}">${escapeHtml(result.responseCode)}</span>
         </div>
 
+        ${inlineErrorsHtml}
+
         <div class="metrics-grid">
           <div class="metric-tile">
             <span class="metric-tile__label">vs. Baseline</span>
-            <span class="metric-tile__value">${escapeHtml(formatSignedPctDisplay(result.pctChangeFromBaseline))}</span>
+            <span class="metric-tile__value">${result.valid ? escapeHtml(formatSignedPctDisplay(result.pctChangeFromBaseline)) : "—"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">vs. Nadir</span>
-            <span class="metric-tile__value">${escapeHtml(formatSignedPctDisplay(result.pctChangeFromNadir))}</span>
+            <span class="metric-tile__value">${result.valid ? escapeHtml(formatSignedPctDisplay(result.pctChangeFromNadir)) : "—"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">Nadir Ref</span>
-            <span class="metric-tile__value">${escapeHtml(result.nadirReference)} ${escapeHtml(result.unit)}</span>
+            <span class="metric-tile__value">${nadirDisp}</span>
           </div>
         </div>
 
@@ -1773,6 +1889,7 @@ function renderRanoOutputs() {
 
         <div class="btn-group" style="margin-top:0.8rem">
           <button type="button" id="rano-copy-summary-btn" class="btn btn--primary btn--sm">Copy Clinical Summary</button>
+          <button type="button" id="rano-dl-summary-btn" class="btn btn--secondary btn--sm">Download Summary (.txt)</button>
         </div>
       `;
     } else if (sub === "rano_bm") {
@@ -1786,6 +1903,8 @@ function renderRanoOutputs() {
           </div>
           <span class="response-pill ${tierClass}">${escapeHtml(result.cnsResponseCode)}</span>
         </div>
+
+        ${inlineErrorsHtml}
 
         <div class="bicompartment-strip">
           <div class="compartment-box">
@@ -1808,17 +1927,17 @@ function renderRanoOutputs() {
         <div class="metrics-grid">
           <div class="metric-tile">
             <span class="metric-tile__label">SLD (Base → Now)</span>
-            <span class="metric-tile__value">${escapeHtml(result.baselineSldMm)} → ${escapeHtml(result.currentSldMm)} mm</span>
-            <span class="metric-tile__sub">Nadir: ${escapeHtml(result.nadirSldMm)} mm</span>
+            <span class="metric-tile__value">${result.valid ? `${escapeHtml(result.baselineSldMm)} → ${escapeHtml(result.currentSldMm)} mm` : "—"}</span>
+            <span class="metric-tile__sub">${result.valid ? `Nadir: ${escapeHtml(result.nadirSldMm)} mm` : "Enter valid diameters"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">vs. Baseline</span>
-            <span class="metric-tile__value">${escapeHtml(formatSignedPctDisplay(result.pctChangeFromBaseline))}</span>
+            <span class="metric-tile__value">${result.valid ? escapeHtml(formatSignedPctDisplay(result.pctChangeFromBaseline)) : "—"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">vs. Nadir</span>
-            <span class="metric-tile__value">${escapeHtml(formatSignedPctDisplay(result.pctChangeFromNadir))}</span>
-            <span class="metric-tile__sub">Abs Δ: ${result.absChangeFromNadirMm > 0 ? "+" : ""}${escapeHtml(result.absChangeFromNadirMm)} mm</span>
+            <span class="metric-tile__value">${result.valid ? escapeHtml(formatSignedPctDisplay(result.pctChangeFromNadir)) : "—"}</span>
+            <span class="metric-tile__sub">${result.valid ? `Abs Δ: ${result.absChangeFromNadirMm > 0 ? "+" : ""}${escapeHtml(result.absChangeFromNadirMm)} mm` : "—"}</span>
           </div>
         </div>
 
@@ -1829,6 +1948,7 @@ function renderRanoOutputs() {
 
         <div class="btn-group" style="margin-top:0.8rem">
           <button type="button" id="rano-copy-summary-btn" class="btn btn--primary btn--sm">Copy Clinical Summary</button>
+          <button type="button" id="rano-dl-summary-btn" class="btn btn--secondary btn--sm">Download Summary (.txt)</button>
         </div>
       `;
     } else {
@@ -1842,25 +1962,28 @@ function renderRanoOutputs() {
           <span class="response-pill ${tierClass}">${escapeHtml(result.resectClass)}</span>
         </div>
 
+        ${inlineErrorsHtml}
+
         <div class="metrics-grid">
           <div class="metric-tile">
             <span class="metric-tile__label">Residual CE</span>
-            <span class="metric-tile__value">${escapeHtml(result.postOpCeVolCm3)} cm³</span>
-            <span class="metric-tile__sub">Pre-Op: ${escapeHtml(result.preOpCeVolCm3)} cm³</span>
+            <span class="metric-tile__value">${result.valid ? `${escapeHtml(result.postOpCeVolCm3)} cm³` : "—"}</span>
+            <span class="metric-tile__sub">${result.valid ? `Pre-Op: ${escapeHtml(result.preOpCeVolCm3)} cm³` : "Enter valid volumes"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">CE Reduction (EOR)</span>
-            <span class="metric-tile__value">${result.ceReductionPct !== null ? `${escapeHtml(result.ceReductionPct.toFixed(1))}%` : "N/A"}</span>
+            <span class="metric-tile__value">${result.valid && result.ceReductionPct !== null ? `${escapeHtml(result.ceReductionPct.toFixed(1))}%` : "N/A"}</span>
           </div>
           <div class="metric-tile">
             <span class="metric-tile__label">Residual Non-CE</span>
-            <span class="metric-tile__value">${result.postOpNonCeVolCm3 !== null ? `${escapeHtml(result.postOpNonCeVolCm3)} cm³` : "Not supplied"}</span>
-            ${result.nonCeReductionPct !== null ? `<span class="metric-tile__sub">FLAIR EOR: ${escapeHtml(result.nonCeReductionPct.toFixed(1))}%</span>` : ""}
+            <span class="metric-tile__value">${!result.valid ? "—" : result.postOpNonCeVolCm3 !== null ? `${escapeHtml(result.postOpNonCeVolCm3)} cm³` : "Not supplied"}</span>
+            ${result.valid && result.nonCeReductionPct !== null ? `<span class="metric-tile__sub">FLAIR EOR: ${escapeHtml(result.nonCeReductionPct.toFixed(1))}%</span>` : ""}
           </div>
         </div>
 
         <div class="btn-group" style="margin-top:0.8rem">
           <button type="button" id="rano-copy-summary-btn" class="btn btn--primary btn--sm">Copy Clinical Summary</button>
+          <button type="button" id="rano-dl-summary-btn" class="btn btn--secondary btn--sm">Download Summary (.txt)</button>
         </div>
       `;
     }
@@ -1931,16 +2054,25 @@ function renderRanoOutputs() {
 }
 
 function wireRanoEvents() {
-  // Sub-tab switcher
+  // Sub-tab switcher (click + WAI-ARIA arrow/Home/End keyboard navigation)
+  const activateRanoSubTab = (subTabKey) => {
+    if (!["rano2", "rano_bm", "rano_resect"].includes(subTabKey)) return;
+    appState.rano.activeSubTab = subTabKey;
+    persistRanoState();
+    renderRanoSubTabs();
+    renderRanoPresets();
+    renderRanoForm();
+    renderRanoOutputs();
+  };
+
   document.querySelectorAll("[data-rano-tab]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      appState.rano.activeSubTab = btn.dataset.ranoTab;
-      persistRanoState();
-      renderRanoSubTabs();
-      renderRanoPresets();
-      renderRanoForm();
-      renderRanoOutputs();
+      activateRanoSubTab(btn.dataset.ranoTab);
     });
+  });
+
+  wireTablistKeyboard(document.getElementById("rano-sub-tablist"), (nextTab) => {
+    activateRanoSubTab(nextTab.dataset.ranoTab);
   });
 
   // Scenario presets
@@ -1969,6 +2101,8 @@ function wireRanoEvents() {
       renderRanoPresets();
       renderRanoForm();
       renderRanoOutputs();
+      const nextChip = presetChips.querySelector(`[data-rano-preset-id="${CSS.escape(preset.id)}"]`);
+      if (nextChip) nextChip.focus();
       showToast(`Loaded scenario: ${preset.label}`);
     });
   }
@@ -1988,6 +2122,8 @@ function wireRanoEvents() {
         renderRanoPresets();
         renderRanoForm();
         renderRanoOutputs();
+        const restored = formCard.querySelector(`[data-r2-set="${CSS.escape(key)}"][data-r2-val="${CSS.escape(val)}"]`);
+        if (restored) restored.focus();
         return;
       }
 
@@ -2015,8 +2151,13 @@ function wireRanoEvents() {
 
       const spdApply = e.target.closest("[data-spd-apply]");
       if (spdApply) {
+        const lesionsList = appState.rano.rano2Lesions || [];
+        if (lesionsList.length === 0) {
+          showToast("Add at least one target lesion before applying SPD.", "warn");
+          return;
+        }
         const targetField = spdApply.dataset.spdApply;
-        const spdRes = computeSpdFromLesions(appState.rano.rano2Lesions || []);
+        const spdRes = computeSpdFromLesions(lesionsList);
         if (!spdRes.valid) {
           showToast("Fix invalid lesion diameters before applying SPD.", "warn");
           return;
@@ -2025,7 +2166,10 @@ function wireRanoEvents() {
         appState.rano.activePresetIds.rano2 = null;
         persistRanoState();
         const inputEl = formCard.querySelector(`[data-r2-key="${targetField}"]`);
-        if (inputEl) inputEl.value = String(spdRes.spdMm2);
+        if (inputEl) {
+          inputEl.value = String(spdRes.spdMm2);
+          syncInputValidityAttr(inputEl, false);
+        }
         renderRanoPresets();
         renderRanoOutputs();
         showToast(`Applied SPD (${spdRes.spdMm2} mm²) to ${targetField.replace("Value", "")}.`);
@@ -2035,10 +2179,13 @@ function wireRanoEvents() {
       // RANO-BM mode toggle
       const bmModeBtn = e.target.closest("[data-bm-mode]");
       if (bmModeBtn) {
-        appState.rano.ranoBmMode = bmModeBtn.dataset.bmMode;
+        const nextMode = bmModeBtn.dataset.bmMode;
+        appState.rano.ranoBmMode = nextMode;
         persistRanoState();
         renderRanoForm();
         renderRanoOutputs();
+        const restored = formCard.querySelector(`[data-bm-mode="${CSS.escape(nextMode)}"]`);
+        if (restored) restored.focus();
         return;
       }
 
@@ -2086,7 +2233,12 @@ function wireRanoEvents() {
         const field = target.dataset.spdField;
         const item = appState.rano.rano2Lesions[idx];
         if (!item) return;
-        item[field] = field === "label" ? target.value : parseNullableInputNumber(target.value);
+        if (field === "label") {
+          item[field] = target.value;
+        } else {
+          item[field] = parseNullableInputNumber(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(item[field], false));
+        }
         persistRanoState();
         updateRano2SpdReadoutOnly();
         return;
@@ -2104,8 +2256,10 @@ function wireRanoEvents() {
           }
         } else if (type === "nullable_number") {
           appState.rano.rano2[key] = parseNullableInputNumber(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.rano2[key], true));
         } else if (type === "number") {
           appState.rano.rano2[key] = target.value.trim() === "" ? NaN : Number(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.rano2[key], false));
         } else {
           appState.rano.rano2[key] = target.value;
         }
@@ -2128,8 +2282,17 @@ function wireRanoEvents() {
           lesion.label = target.value;
         } else if (field === "nadirMm") {
           lesion.nadirMm = parseNullableInputNumber(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(lesion.nadirMm, true));
         } else {
           lesion[field] = target.value.trim() === "" ? NaN : Number(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(lesion[field], false));
+          if (field === "baselineMm") {
+            const hintEl = target.parentElement?.querySelector(".bm-sub10-hint");
+            if (hintEl) {
+              const sub10 = Number.isFinite(lesion.baselineMm) && lesion.baselineMm > 0 && lesion.baselineMm < 10;
+              hintEl.hidden = !sub10;
+            }
+          }
         }
         if (appState.rano.activePresetIds.rano_bm !== null) {
           appState.rano.activePresetIds.rano_bm = null;
@@ -2148,8 +2311,10 @@ function wireRanoEvents() {
           appState.rano.ranoBm[key] = Boolean(target.checked);
         } else if (type === "nullable_number") {
           appState.rano.ranoBm[key] = parseNullableInputNumber(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.ranoBm[key], true));
         } else if (type === "number") {
           appState.rano.ranoBm[key] = target.value.trim() === "" ? NaN : Number(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.ranoBm[key], false));
         } else {
           appState.rano.ranoBm[key] = target.value;
         }
@@ -2170,8 +2335,10 @@ function wireRanoEvents() {
           appState.rano.ranoResect[key] = Boolean(target.checked);
         } else if (type === "nullable_number") {
           appState.rano.ranoResect[key] = parseNullableInputNumber(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.ranoResect[key], true));
         } else if (type === "number") {
           appState.rano.ranoResect[key] = target.value.trim() === "" ? NaN : Number(target.value);
+          syncInputValidityAttr(target, isInvalidRanoNum(appState.rano.ranoResect[key], false));
         }
         if (appState.rano.activePresetIds.rano_resect !== null) {
           appState.rano.activePresetIds.rano_resect = null;
@@ -2186,7 +2353,7 @@ function wireRanoEvents() {
     formCard.addEventListener("change", handleRanoInput);
   }
 
-  // Copy Clinical Summary
+  // Copy & Download Clinical Summary
   const resultCard = document.getElementById("rano-result-card");
   if (resultCard) {
     resultCard.addEventListener("click", (e) => {
@@ -2194,6 +2361,12 @@ function wireRanoEvents() {
         const sub = appState.rano.activeSubTab;
         const summary = formatClinicalSummary(sub, appState.lastRanoResult, getActiveRanoInputPayload());
         copyToClipboard(summary, `Copied ${sub.toUpperCase().replace("_", "-")} clinical summary.`);
+      } else if (e.target.closest("#rano-dl-summary-btn")) {
+        const sub = appState.rano.activeSubTab;
+        const summary = formatClinicalSummary(sub, appState.lastRanoResult, getActiveRanoInputPayload());
+        const slug = slugifyFilename(`${sub.replace("_", "-")}-summary`, "rano-summary");
+        downloadTextFile(`${slug}.txt`, summary, "text/plain;charset=utf-8");
+        showToast("Downloaded RANO clinical summary (.txt).");
       }
     });
   }
@@ -2286,14 +2459,22 @@ function renderAuditDomainPills(scoreResult) {
   if (!container || !appState.auditChecklist) return;
 
   const activeDom = appState.auditFilters.domainId;
+  const checklistContainer = document.getElementById("audit-checklist-container");
+  if (checklistContainer) {
+    checklistContainer.setAttribute("aria-labelledby", `audit-domain-tab-${activeDom}`);
+  }
+
   const totalBlockers = scoreResult?.criticalBlockersFailedCount || 0;
   const totalItems = Array.isArray(appState.auditChecklist.items) ? appState.auditChecklist.items.length : 36;
   const allBtn = `
     <button
       type="button"
+      id="audit-domain-tab-all"
       class="domain-pill${activeDom === "all" ? " is-active" : ""}"
       role="tab"
       aria-selected="${String(activeDom === "all")}"
+      aria-controls="audit-checklist-container"
+      tabindex="${activeDom === "all" ? "0" : "-1"}"
       data-domain-filter="all"
     >
       <span>All Domains</span>
@@ -2310,10 +2491,14 @@ function renderAuditDomainPills(scoreResult) {
     return `
       <button
         type="button"
+        id="audit-domain-tab-${escapeHtml(ds.domainId)}"
         class="domain-pill${isAct ? " is-active" : ""}"
         role="tab"
         aria-selected="${String(isAct)}"
+        aria-controls="audit-checklist-container"
+        tabindex="${isAct ? "0" : "-1"}"
         data-domain-filter="${escapeHtml(ds.domainId)}"
+        title="${escapeHtml(ds.title)}: ${ds.answeredCount}/${ds.applicableCount} answered (${ds.score}% rigor)"
       >
         <span>${escapeHtml(ds.shortTitle)}</span>
         <span class="domain-pill__score">${ds.score}%</span>
@@ -2325,6 +2510,132 @@ function renderAuditDomainPills(scoreResult) {
   container.innerHTML = allBtn + domainBtns;
 }
 
+function renderAuditProgressQuickbar(scoreResult) {
+  const statusEl = document.getElementById("audit-quickbar-status");
+  const nextBtn = document.getElementById("audit-next-unanswered-btn");
+  const blockersBtn = document.getElementById("audit-jump-blockers-btn");
+  const pillsContainer = document.getElementById("audit-domain-progress-pills");
+  if (!appState.auditChecklist || !scoreResult) return;
+
+  const items = appState.auditChecklist.items || [];
+  const responses = appState.audit?.responses || {};
+  const unansweredIds = items
+    .filter((it) => (responses[it.id]?.status || "unanswered") === "unanswered")
+    .map((it) => it.id);
+
+  const failedBlockerIds = Array.isArray(scoreResult.criticalFailedIds)
+    ? scoreResult.criticalFailedIds
+    : [];
+
+  const unverifiedBlockerIds = items
+    .filter((it) => {
+      if (it.severity !== "critical") return false;
+      const st = responses[it.id]?.status || "unanswered";
+      return st === "unanswered" || st === "partial";
+    })
+    .map((it) => it.id);
+
+  if (statusEl) {
+    const blockerPart = failedBlockerIds.length > 0
+      ? ` · ${failedBlockerIds.length} Critical Blocker${failedBlockerIds.length === 1 ? "" : "s"} failed`
+      : unverifiedBlockerIds.length > 0
+        ? ` · ${unverifiedBlockerIds.length} Critical Blocker${unverifiedBlockerIds.length === 1 ? "" : "s"} unverified`
+        : " · 0 Critical Blockers failed";
+    statusEl.textContent = `${scoreResult.counts.answered}/${scoreResult.counts.applicable} applicable answered (${scoreResult.completionPct}%)${blockerPart}`;
+  }
+
+  if (nextBtn) {
+    if (unansweredIds.length > 0) {
+      nextBtn.disabled = false;
+      nextBtn.textContent = `Next Unanswered Item (${unansweredIds.length})`;
+    } else {
+      nextBtn.disabled = true;
+      nextBtn.textContent = "All Applicable Answered \u2713";
+    }
+  }
+
+  if (blockersBtn) {
+    blockersBtn.classList.remove("has-blockers", "has-unverified");
+    if (failedBlockerIds.length > 0) {
+      blockersBtn.classList.add("has-blockers");
+      blockersBtn.textContent = `Jump to Critical Blockers (${failedBlockerIds.length} Failed)`;
+    } else if (unverifiedBlockerIds.length > 0) {
+      blockersBtn.classList.add("has-unverified");
+      blockersBtn.textContent = `Jump to Critical Blockers (${unverifiedBlockerIds.length} Unverified)`;
+    } else {
+      blockersBtn.textContent = "Jump to Critical Blockers (All Verified \u2713)";
+    }
+  }
+
+  if (pillsContainer) {
+    const activeDom = appState.auditFilters.domainId;
+    pillsContainer.innerHTML = (scoreResult.domainScores || []).map((ds) => {
+      const isAct = activeDom === ds.domainId;
+      const hasBlocker = ds.criticalFailedCount > 0;
+      const isDone = ds.applicableCount > 0 && ds.answeredCount >= ds.applicableCount && !hasBlocker;
+      const pct = ds.applicableCount > 0
+        ? Math.round((ds.answeredCount / ds.applicableCount) * 100)
+        : 100;
+      const flagGlyph = hasBlocker ? " !" : isDone ? " \u2713" : "";
+      const countText = ds.applicableCount > 0 ? `${ds.answeredCount}/${ds.applicableCount}${flagGlyph}` : "N/A";
+      return `
+        <button
+          type="button"
+          class="domain-prog-pill${isAct ? " is-active" : ""}${isDone ? " domain-prog-pill--done" : ""}${hasBlocker ? " has-blocker" : ""}"
+          data-domain-prog="${escapeHtml(ds.domainId)}"
+          aria-pressed="${String(isAct)}"
+          title="${escapeHtml(ds.title)} — ${ds.answeredCount}/${ds.applicableCount} answered (${ds.score}% rigor). Click to filter domain."
+        >
+          <span class="domain-prog-pill__top">
+            <span class="domain-prog-pill__name">${escapeHtml(ds.shortTitle)}</span>
+            <span class="domain-prog-pill__count">${escapeHtml(countText)}</span>
+          </span>
+          <span class="domain-prog-pill__bar" aria-hidden="true">
+            <span class="domain-prog-pill__fill" style="width:${pct}%"></span>
+          </span>
+        </button>
+      `;
+    }).join("");
+  }
+}
+
+function jumpToAuditItem(itemId, options = {}) {
+  if (!itemId) return;
+  const { openGuidance = false, focusStatusBtn = false } = options;
+
+  let el = document.getElementById(`audit-item-${itemId}`);
+  if (!el) {
+    appState.auditFilters = { domainId: "all", severity: "all", status: "all", query: "" };
+    const sevSel = document.getElementById("audit-severity-filter");
+    const stSel = document.getElementById("audit-status-filter");
+    const searchIn = document.getElementById("audit-search-input");
+    if (sevSel) sevSel.value = "all";
+    if (stSel) stSel.value = "all";
+    if (searchIn) searchIn.value = "";
+    renderAuditChecklist();
+    renderAuditDomainPills(appState.lastAuditScore);
+    renderAuditProgressQuickbar(appState.lastAuditScore);
+    el = document.getElementById(`audit-item-${itemId}`);
+  }
+
+  if (el) {
+    if (openGuidance) {
+      const details = el.querySelector("details");
+      if (details) details.open = true;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("is-flash");
+    void el.offsetWidth;
+    el.classList.add("is-flash");
+    if (focusStatusBtn) {
+      const targetBtn = el.querySelector(".status-btn.is-selected") || el.querySelector(".status-btn");
+      if (targetBtn) {
+        targetBtn.focus({ preventScroll: true });
+      }
+    }
+  }
+}
+
 function buildAuditItemCardHtml(item, resp) {
   const status = resp?.status || "unanswered";
   const evidence = resp?.evidence || "";
@@ -2332,7 +2643,7 @@ function buildAuditItemCardHtml(item, resp) {
   const statusMod = isBlockerFail
     ? "audit-item--blocker-fail"
     : status !== "unanswered"
-      ? `audit-item--${status}`
+      ? `audit-item--${escapeHtml(status)}`
       : "";
 
   const weight = SEVERITY_WEIGHTS[item.severity] || 1;
@@ -2507,6 +2818,7 @@ function renderAuditOutputs() {
   appState.lastAuditScore = score;
 
   renderAuditDomainPills(score);
+  renderAuditProgressQuickbar(score);
 
   // Critical Blocker Warning Banner
   const blockerBanner = document.getElementById("audit-blocker-banner");
@@ -2591,9 +2903,9 @@ function renderAuditOutputs() {
       </div>
 
       <div class="tally-row">
-        <span class="tally-chip" style="color:var(--status-pass)">Pass: ${score.counts.pass}</span>
-        <span class="tally-chip" style="color:var(--status-warn)">Partial: ${score.counts.partial}</span>
-        <span class="tally-chip" style="color:var(--status-critical)">Fail: ${score.counts.fail}</span>
+        <span class="tally-chip tally-chip--pass">Pass: ${score.counts.pass}</span>
+        <span class="tally-chip tally-chip--warn">Partial: ${score.counts.partial}</span>
+        <span class="tally-chip tally-chip--fail">Fail: ${score.counts.fail}</span>
         <span class="tally-chip">N/A: ${score.counts.na}</span>
         <span class="tally-chip">Unanswered: ${score.counts.unanswered}</span>
       </div>
@@ -2687,6 +2999,8 @@ function wireAuditEvents() {
       renderAuditPresetButtons();
       renderAuditChecklist();
       renderAuditOutputs();
+      const restoredPreset = presetBtns.querySelector(`[data-audit-preset="${CSS.escape(key)}"]`);
+      if (restoredPreset) restoredPreset.focus();
       showToast(`Loaded audit preset: ${appState.auditChecklist.presets[key]?.label || key}`);
     });
   }
@@ -2719,41 +3033,132 @@ function wireAuditEvents() {
     blockerBanner.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-jump-item]");
       if (!btn) return;
-      const itemId = btn.dataset.jumpItem;
-      // Ensure filters don't hide the target item
-      let el = document.getElementById(`audit-item-${itemId}`);
-      if (!el) {
-        appState.auditFilters = { domainId: "all", severity: "all", status: "all", query: "" };
-        const sevSel = document.getElementById("audit-severity-filter");
-        const stSel = document.getElementById("audit-status-filter");
-        const searchIn = document.getElementById("audit-search-input");
-        if (sevSel) sevSel.value = "all";
-        if (stSel) stSel.value = "all";
-        if (searchIn) searchIn.value = "";
-        renderAuditChecklist();
-        renderAuditDomainPills(appState.lastAuditScore);
-        el = document.getElementById(`audit-item-${itemId}`);
-      }
-      if (el) {
-        const details = el.querySelector("details");
-        if (details) details.open = true;
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.remove("is-flash");
-        void el.offsetWidth;
-        el.classList.add("is-flash");
-      }
+      jumpToAuditItem(btn.dataset.jumpItem, { openGuidance: true, focusStatusBtn: true });
     });
   }
 
-  // Domain pills filter
+  // Quick-Jump Action Bar: Next Unanswered Item, Jump to Critical Blockers & Domain Progress Pills
+  const nextUnansweredBtn = document.getElementById("audit-next-unanswered-btn");
+  if (nextUnansweredBtn) {
+    nextUnansweredBtn.addEventListener("click", () => {
+      const items = appState.auditChecklist?.items || [];
+      const responses = appState.audit?.responses || {};
+      const unansweredIds = items
+        .filter((it) => (responses[it.id]?.status || "unanswered") === "unanswered")
+        .map((it) => it.id);
+      if (unansweredIds.length === 0) {
+        showToast("All applicable audit items are answered.");
+        return;
+      }
+
+      // Advance from active card in DOM if focused, else from lastUnansweredJumpId cursor
+      let anchorId = appState.lastUnansweredJumpId;
+      const focusedCard = document.activeElement?.closest?.("[data-audit-card]");
+      if (focusedCard && focusedCard.dataset.auditCard) {
+        anchorId = focusedCard.dataset.auditCard;
+      }
+
+      let targetId = unansweredIds[0];
+      if (anchorId) {
+        const allIds = items.map((it) => it.id);
+        const anchorPos = allIds.indexOf(anchorId);
+        if (anchorPos >= 0) {
+          const afterAnchor = items
+            .slice(anchorPos + 1)
+            .find((it) => (responses[it.id]?.status || "unanswered") === "unanswered");
+          if (afterAnchor) {
+            targetId = afterAnchor.id;
+          }
+        }
+      }
+
+      appState.lastUnansweredJumpId = targetId;
+      jumpToAuditItem(targetId, { openGuidance: false, focusStatusBtn: true });
+      const idxLabel = unansweredIds.indexOf(targetId) + 1;
+      showToast(`Unanswered item ${idxLabel}/${unansweredIds.length}: ${targetId}`);
+    });
+  }
+
+  const jumpBlockersBtn = document.getElementById("audit-jump-blockers-btn");
+  if (jumpBlockersBtn) {
+    jumpBlockersBtn.addEventListener("click", () => {
+      const items = appState.auditChecklist?.items || [];
+      const responses = appState.audit?.responses || {};
+      const score = appState.lastAuditScore;
+
+      const failedIds = Array.isArray(score?.criticalFailedIds) ? score.criticalFailedIds : [];
+      const unverifiedIds = items
+        .filter((it) => {
+          if (it.severity !== "critical") return false;
+          const st = responses[it.id]?.status || "unanswered";
+          return st === "unanswered" || st === "partial";
+        })
+        .map((it) => it.id);
+      const allCriticalIds = items
+        .filter((it) => it.severity === "critical")
+        .map((it) => it.id);
+
+      let pool = failedIds;
+      let labelPrefix = "Failed Critical Blocker";
+      if (pool.length === 0 && unverifiedIds.length > 0) {
+        pool = unverifiedIds;
+        labelPrefix = "Unverified Critical Blocker";
+      } else if (pool.length === 0) {
+        pool = allCriticalIds;
+        labelPrefix = "Verified Critical Blocker";
+      }
+      if (pool.length === 0) return;
+
+      const prevPos = pool.indexOf(appState.lastBlockerJumpId);
+      const nextPos = (prevPos + 1) % pool.length;
+      const targetId = pool[nextPos];
+      appState.lastBlockerJumpId = targetId;
+
+      jumpToAuditItem(targetId, { openGuidance: true, focusStatusBtn: true });
+      showToast(`${labelPrefix} ${nextPos + 1}/${pool.length}: ${targetId}`);
+    });
+  }
+
+  const activateDomainFilter = (domId, scrollToList = false) => {
+    appState.auditFilters.domainId = domId;
+    renderAuditDomainPills(appState.lastAuditScore);
+    renderAuditProgressQuickbar(appState.lastAuditScore);
+    renderAuditChecklist();
+    if (scrollToList) {
+      const toolbar = document.querySelector(".checklist-toolbar");
+      if (toolbar) {
+        toolbar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  };
+
+  const domainProgPills = document.getElementById("audit-domain-progress-pills");
+  if (domainProgPills) {
+    domainProgPills.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-domain-prog]");
+      if (!btn) return;
+      const clickedDom = btn.dataset.domainProg;
+      const nextDom = appState.auditFilters.domainId === clickedDom ? "all" : clickedDom;
+      activateDomainFilter(nextDom, true);
+      const restored = domainProgPills.querySelector(`[data-domain-prog="${CSS.escape(clickedDom)}"]`);
+      if (restored) restored.focus({ preventScroll: true });
+    });
+  }
+
+  // Domain pills filter (click + WAI-ARIA keyboard navigation)
   const domainPills = document.getElementById("audit-domain-pills");
   if (domainPills) {
     domainPills.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-domain-filter]");
       if (!btn) return;
-      appState.auditFilters.domainId = btn.dataset.domainFilter;
-      renderAuditDomainPills(appState.lastAuditScore);
-      renderAuditChecklist();
+      const domId = btn.dataset.domainFilter;
+      activateDomainFilter(domId, false);
+      const restored = domainPills.querySelector(`[data-domain-filter="${CSS.escape(domId)}"]`);
+      if (restored) restored.focus({ preventScroll: true });
+    });
+
+    wireTablistKeyboard(domainPills, (nextTab) => {
+      activateDomainFilter(nextTab.dataset.domainFilter, false);
     });
   }
 
@@ -2963,18 +3368,538 @@ function wireAuditEvents() {
   // Export source preview disclosure & format tabs
   const previewDisclosure = document.getElementById("audit-export-preview-disclosure");
   if (previewDisclosure) {
+    const setPreviewFormat = (fmt) => {
+      appState.auditPreviewFormat = fmt === "tex" ? "tex" : "md";
+      const codeEl = document.getElementById("audit-export-preview-code");
+      if (codeEl) {
+        codeEl.setAttribute("aria-labelledby", `preview-tab-${appState.auditPreviewFormat}`);
+      }
+      previewDisclosure.querySelectorAll("[data-preview-fmt]").forEach((b) => {
+        const isAct = b.dataset.previewFmt === appState.auditPreviewFormat;
+        b.classList.toggle("is-active", isAct);
+        b.setAttribute("aria-selected", String(isAct));
+        b.setAttribute("tabindex", isAct ? "0" : "-1");
+      });
+      updateAuditExportPreview();
+    };
+
     previewDisclosure.addEventListener("toggle", () => {
       updateAuditExportPreview();
     });
     previewDisclosure.addEventListener("click", (e) => {
       const tabBtn = e.target.closest("[data-preview-fmt]");
       if (!tabBtn) return;
-      appState.auditPreviewFormat = tabBtn.dataset.previewFmt;
-      previewDisclosure.querySelectorAll("[data-preview-fmt]").forEach((b) => {
-        b.classList.toggle("is-active", b.dataset.previewFmt === appState.auditPreviewFormat);
-      });
-      updateAuditExportPreview();
+      setPreviewFormat(tabBtn.dataset.previewFmt);
     });
+    wireTablistKeyboard(document.getElementById("audit-export-preview-tabs"), (nextTab) => {
+      setPreviewFormat(nextTab.dataset.previewFmt);
+    });
+  }
+}
+
+/* ==========================================================================
+   Publication-Clean Print / Save PDF Summary Builder
+   ========================================================================== */
+
+function formatCns5FieldDisplayValue(field, rawValue) {
+  if (field.type === "boolean") {
+    return rawValue ? "Yes (Present)" : "No (Absent)";
+  }
+  if (field.type === "number") {
+    if (rawValue === null || rawValue === undefined || rawValue === "") return "Not specified";
+    return String(rawValue);
+  }
+  if (Array.isArray(field.options)) {
+    const matched = field.options.find((opt) => String(opt.value) === String(rawValue));
+    if (matched) return matched.label;
+  }
+  return rawValue === null || rawValue === undefined || rawValue === "" ? "Not specified" : String(rawValue);
+}
+
+function renderPrintSummarySheet() {
+  const sheet = document.getElementById("print-summary-sheet");
+  if (!sheet) return;
+
+  const stampDate = new Date().toISOString().slice(0, 10);
+  const disclaimerHtml = `
+    <div class="print-disclaimer">
+      <strong>Research &amp; Educational Use Only — Not a Certified Medical Device (Non-SaMD).</strong>
+      Computed 100% locally in the browser with zero network uploads and zero Protected Health Information (PHI).
+    </div>
+  `;
+
+  if (appState.activeTab === "cns5") {
+    const famId = appState.cns5?.activeFamily || "adult_diffuse_glioma";
+    const inputState = appState.cns5?.inputsByFamily?.[famId] || getDefaultCns5Input(famId);
+    const res = appState.lastCns5Result || classifyCns5(inputState, appState.cns5Rules);
+    const famMeta = getCns5FamilyMeta(res.family);
+    const config = getFamilyFormConfig(res.family);
+
+    const gradeText = typeof res.cnsWhoGrade === "number" ? `Grade ${res.cnsWhoGrade}` : "Not Assigned";
+    const inputRowsHtml = (config.fields || []).map((field) => `
+      <tr>
+        <td><strong>${escapeHtml(field.label)}</strong></td>
+        <td>${escapeHtml(formatCns5FieldDisplayValue(field, inputState[field.key]))}</td>
+      </tr>
+    `).join("");
+
+    const callouts = [];
+    if (res.molecularUpgradeTriggered) {
+      callouts.push(`
+        <div class="print-callout print-callout--critical">
+          <strong>Molecular Grade / Risk Upgrade Triggered:</strong>
+          Defining WHO CNS5 molecular criteria elevated this tumor to <strong>${escapeHtml(res.gradeDisplay)}</strong> independent of histologic grade appearance.
+        </div>
+      `);
+    }
+    if (res.nosNecNote) {
+      callouts.push(`
+        <div class="print-callout print-callout--warn">
+          <strong>${escapeHtml(res.nosNecStatus === "NEC" ? "NEC" : "NOS")} Guidance:</strong>
+          ${escapeHtml(res.nosNecNote)}
+        </div>
+      `);
+    }
+    if (Array.isArray(res.warnings) && res.warnings.length > 0) {
+      callouts.push(`
+        <div class="print-callout print-callout--warn">
+          <strong>Discordance &amp; Pathology QA Alerts:</strong>
+          <ul class="print-list">${res.warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>
+        </div>
+      `);
+    }
+
+    const criteriaHtml = (res.criteriaMatched || []).map((c) => `<li>${escapeHtml(c)}</li>`).join("");
+    const pearlsHtml = (res.clinicalPearls || []).map((p) => `<li>${escapeHtml(p)}</li>`).join("");
+    const refsHtml = (res.references || []).map((ref) => `
+      <li>${escapeHtml(ref.citation)}${ref.doi ? ` <code>doi:${escapeHtml(ref.doi)}</code>` : ""}</li>
+    `).join("");
+
+    sheet.innerHTML = `
+      <div class="print-doc">
+        <header class="print-masthead">
+          <div>
+            <div class="print-masthead__kicker">CNS5-Audit &middot; Module 01</div>
+            <h1 class="print-masthead__title">WHO CNS5 (2021) Layered Integrated Neuropathology Report</h1>
+            <p class="print-masthead__sub">Louis et al., <em>Neuro-Oncology</em> 2021;23(8):1231–1251 &middot; cIMPACT-NOW Updates 1–7</p>
+          </div>
+          <div class="print-masthead__stamp">
+            <div>Date: ${escapeHtml(stampDate)}</div>
+            <div>CNS5-Audit v1.0.0</div>
+          </div>
+        </header>
+
+        ${disclaimerHtml}
+
+        <div class="print-hero">
+          <div>
+            <div class="print-masthead__kicker">${escapeHtml(famMeta.label)}</div>
+            <h2 class="print-hero__title">${escapeHtml(res.diagnosis)}</h2>
+            <p class="print-hero__meta">
+              <strong>${escapeHtml(res.gradeDisplay)}</strong> &middot;
+              ${res.nosNecStatus === "none" ? "Definitive WHO CNS5 Entity" : `${escapeHtml(res.nosNecStatus)} Designation`}
+            </p>
+          </div>
+          <div class="print-badge">
+            <span class="print-badge__kicker">CNS WHO</span>
+            <span class="print-badge__val">${escapeHtml(gradeText)}</span>
+          </div>
+        </div>
+
+        ${callouts.join("")}
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">Entered Molecular &amp; Histological Profile</h3>
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th style="width:52%">Diagnostic Parameter</th>
+                <th>Reported Status / Value</th>
+              </tr>
+            </thead>
+            <tbody>${inputRowsHtml}</tbody>
+          </table>
+        </div>
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">WHO CNS5 Diagnostic Decision Path Trace</h3>
+          <div id="print-cns5-trace-svg" class="print-svg-box"></div>
+        </div>
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">Criteria Matched</h3>
+          ${criteriaHtml ? `<ul class="print-list">${criteriaHtml}</ul>` : `<p class="print-hero__meta">None.</p>`}
+        </div>
+
+        ${pearlsHtml ? `
+          <div class="print-section print-section--keep">
+            <h3 class="print-section__title">Therapeutic &amp; Prognostic Clinical Pearls</h3>
+            <ul class="print-list">${pearlsHtml}</ul>
+          </div>
+        ` : ""}
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">Literature References</h3>
+          <ol class="print-list">${refsHtml}</ol>
+        </div>
+
+        <footer class="print-footer-note">
+          Generated locally by CNS5-Audit &mdash; For Research &amp; Educational Use Only (Non-SaMD).
+        </footer>
+      </div>
+    `;
+
+    const traceTarget = document.getElementById("print-cns5-trace-svg");
+    if (traceTarget) {
+      renderDecisionTrace(traceTarget, res);
+    }
+    return;
+  }
+
+  if (appState.activeTab === "rano") {
+    const sub = appState.rano?.activeSubTab || "rano2";
+    const payload = getActiveRanoInputPayload();
+    const res = appState.lastRanoResult || (
+      sub === "rano2" ? calculateRano2(payload)
+        : sub === "rano_bm" ? calculateRanoBm(payload)
+          : calculateRanoResect(payload)
+    );
+
+    let badgeLabel = "";
+    let heroTitle = "";
+    let heroMeta = "";
+    let rowsHtml = "";
+    let extraLesionsHtml = "";
+
+    const fmtSteroid = (s) => (
+      s === "none_or_physiologic" ? "None / Physiologic replacement"
+        : s === "stable_or_decreased" ? "Stable or decreased dose"
+          : s === "increased" ? "Increased therapeutic dose"
+            : String(s || "Unspecified")
+    );
+    const fmtClin = (c) => (
+      c === "worse" ? "Unequivocal clinical / neurologic deterioration" : "Stable or improved"
+    );
+
+    if (sub === "rano2") {
+      badgeLabel = res.responseCode;
+      heroTitle = res.responseLabel;
+      heroMeta = `${res.tumorMode === "non_enhancing_lgg" ? "Non-Enhancing LGG Track" : "Enhancing HGG Track"} · ${res.measurementType === "3d_volume" ? "3D Volumetry (cm³)" : "2D SPD (mm²)"}`;
+      rowsHtml = `
+        <tr><td><strong>Baseline Measurement</strong></td><td>${res.valid ? `${escapeHtml(formatInputNum(payload.baselineValue))} ${escapeHtml(res.unit)}` : "Invalid"}</td></tr>
+        <tr><td><strong>Nadir Reference</strong></td><td>${res.valid ? `${escapeHtml(res.nadirReference)} ${escapeHtml(res.unit)}` : "—"}</td></tr>
+        <tr><td><strong>Current Measurement</strong></td><td>${res.valid ? `${escapeHtml(formatInputNum(payload.currentValue))} ${escapeHtml(res.unit)}` : "Invalid"}</td></tr>
+        <tr><td><strong>Change vs. Baseline / Nadir</strong></td><td>${res.valid ? `${escapeHtml(formatSignedPctDisplay(res.pctChangeFromBaseline))} vs. baseline · ${escapeHtml(formatSignedPctDisplay(res.pctChangeFromNadir))} vs. nadir` : "—"}</td></tr>
+        <tr><td><strong>Corticosteroids &amp; Clinical Status</strong></td><td>${escapeHtml(fmtSteroid(payload.corticosteroids))} · ${escapeHtml(fmtClin(payload.clinicalStatus))}</td></tr>
+        <tr><td><strong>Post-RT &amp; Disease Modifiers</strong></td><td>&le;12w Post-RT: ${payload.within12WeeksPostRt ? "Yes" : "No"}${payload.within12WeeksPostRt ? ` (Out-of-field: ${payload.outsideRtField ? "Yes" : "No"})` : ""} · New lesion: ${payload.newMeasurableLesion ? "Yes" : "No"} · Non-measurable PD: ${payload.nonMeasurableProgression ? "Yes" : "No"}</td></tr>
+        <tr><td><strong>Confirmation Guidance</strong></td><td>${escapeHtml(res.confirmationStatus || "")}</td></tr>
+      `;
+    } else if (sub === "rano_bm") {
+      badgeLabel = `CNS ${res.cnsResponseCode}`;
+      heroTitle = res.cnsResponseLabel;
+      heroMeta = res.bicompartmentalSummary || "";
+      rowsHtml = `
+        <tr><td><strong>CNS Baseline / Nadir / Current SLD</strong></td><td>${res.valid ? `${escapeHtml(res.baselineSldMm)} mm / ${escapeHtml(res.nadirSldMm)} mm / ${escapeHtml(res.currentSldMm)} mm` : "Invalid"}</td></tr>
+        <tr><td><strong>CNS Change vs. Baseline / Nadir</strong></td><td>${res.valid ? `${escapeHtml(formatSignedPctDisplay(res.pctChangeFromBaseline))} vs. baseline · ${escapeHtml(formatSignedPctDisplay(res.pctChangeFromNadir))} (${res.absChangeFromNadirMm > 0 ? "+" : ""}${escapeHtml(res.absChangeFromNadirMm)} mm) vs. nadir` : "—"}</td></tr>
+        <tr><td><strong>Non-CNS Systemic Status (RECIST 1.1)</strong></td><td>${escapeHtml(res.nonCnsResponseCode === "not_applicable" ? "Not Applicable / CNS-Only" : res.nonCnsResponseCode)}${res.compartmentDiscordance ? " (Compartmental Discordance)" : ""}</td></tr>
+        <tr><td><strong>Corticosteroids &amp; Neurologic Status</strong></td><td>${escapeHtml(fmtSteroid(payload.corticosteroids))} · ${escapeHtml(fmtClin(payload.neurologicStatus))}</td></tr>
+        <tr><td><strong>Prior SRS &amp; CNS Modifiers</strong></td><td>SRS &le;6 mo: ${payload.priorSrsWithin6Months ? "Yes" : "No"} · New CNS lesion: ${payload.newCnsLesion ? "Yes" : "No"} · Non-target CNS PD: ${payload.nonTargetCnsProgression ? "Yes" : "No"}</td></tr>
+        <tr><td><strong>Confirmation Guidance</strong></td><td>${escapeHtml(res.confirmationStatus || "")}</td></tr>
+      `;
+      if (Array.isArray(payload.targetLesions) && payload.targetLesions.length > 0) {
+        const lRows = payload.targetLesions.slice(0, 5).map((l, i) => `
+          <tr>
+            <td>${escapeHtml(l.label || `CNS Met #${i + 1}`)}</td>
+            <td>${escapeHtml(formatInputNum(l.baselineMm))} mm</td>
+            <td>${l.nadirMm !== null && l.nadirMm !== undefined && l.nadirMm !== "" ? `${escapeHtml(formatInputNum(l.nadirMm))} mm` : "Baseline"}</td>
+            <td>${escapeHtml(formatInputNum(l.currentMm))} mm</td>
+          </tr>
+        `).join("");
+        extraLesionsHtml = `
+          <div class="print-section print-section--keep">
+            <h3 class="print-section__title">Evaluated CNS Target Lesions</h3>
+            <table class="print-table">
+              <thead><tr><th>Lesion</th><th>Baseline</th><th>Nadir</th><th>Current</th></tr></thead>
+              <tbody>${lRows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+    } else {
+      badgeLabel = res.resectClass;
+      heroTitle = res.className;
+      heroMeta = `Category Group: ${res.categoryGroup}`;
+      rowsHtml = `
+        <tr><td><strong>Pre-Operative CE Volume</strong></td><td>${res.valid ? `${escapeHtml(res.preOpCeVolCm3)} cm³` : "Invalid"}</td></tr>
+        <tr><td><strong>Post-Operative Residual CE Volume</strong></td><td>${res.valid ? `${escapeHtml(res.postOpCeVolCm3)} cm³` : "Invalid"}</td></tr>
+        <tr><td><strong>CE Volumetric Reduction (EOR)</strong></td><td>${res.valid && res.ceReductionPct !== null ? `${escapeHtml(res.ceReductionPct.toFixed(1))}%` : "N/A"}</td></tr>
+        <tr><td><strong>Residual Non-CE (FLAIR) Volume</strong></td><td>${!res.valid ? "—" : res.postOpNonCeVolCm3 !== null ? `${escapeHtml(res.postOpNonCeVolCm3)} cm³${res.nonCeReductionPct !== null ? ` (${escapeHtml(res.nonCeReductionPct.toFixed(1))}% FLAIR reduction)` : ""}` : "Not supplied"}</td></tr>
+        <tr><td><strong>Surgical Biopsy Flag &amp; MRI Timing</strong></td><td>Biopsy procedure: ${payload.isBiopsyProcedure ? "Yes" : "No"} · Post-op MRI timing: ${payload.postOpMriTimingHours !== null && payload.postOpMriTimingHours !== undefined && payload.postOpMriTimingHours !== "" ? `${escapeHtml(formatInputNum(payload.postOpMriTimingHours))} hours` : "Not specified"}</td></tr>
+      `;
+    }
+
+    const rationaleHtml = (res.rationale || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+    const warningsHtml = (res.warnings || []).map((w) => `<li>${escapeHtml(w)}</li>`).join("");
+    const errorsHtml = !res.valid && Array.isArray(res.errors) && res.errors.length > 0
+      ? `<div class="print-callout print-callout--critical"><strong>Validation Errors:</strong><ul class="print-list">${res.errors.map((e) => `<li>${escapeHtml(e)}</li>`).join("")}</ul></div>`
+      : "";
+
+    sheet.innerHTML = `
+      <div class="print-doc">
+        <header class="print-masthead">
+          <div>
+            <div class="print-masthead__kicker">CNS5-Audit &middot; Module 02</div>
+            <h1 class="print-masthead__title">Multi-Standard RANO Clinical Calculation Note</h1>
+            <p class="print-masthead__sub">${escapeHtml(res.standard || "RANO Clinical Assessment")}</p>
+          </div>
+          <div class="print-masthead__stamp">
+            <div>Date: ${escapeHtml(stampDate)}</div>
+            <div>CNS5-Audit v1.0.0</div>
+          </div>
+        </header>
+
+        ${disclaimerHtml}
+
+        <div class="print-hero">
+          <div>
+            <div class="print-masthead__kicker">${escapeHtml(res.standard || "")}</div>
+            <h2 class="print-hero__title">${escapeHtml(heroTitle)}</h2>
+            <p class="print-hero__meta">${escapeHtml(heroMeta)}</p>
+          </div>
+          <div class="print-badge">
+            <span class="print-badge__kicker">CLASSIFICATION</span>
+            <span class="print-badge__val">${escapeHtml(badgeLabel)}</span>
+          </div>
+        </div>
+
+        ${errorsHtml}
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">Quantitative Measurements &amp; Clinical Modifiers</h3>
+          <table class="print-table">
+            <thead><tr><th style="width:42%">Parameter</th><th>Value / Assessment</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+
+        ${extraLesionsHtml}
+
+        <div class="print-section print-section--keep">
+          <h3 class="print-section__title">Quantitative Threshold Visual Scale</h3>
+          <div id="print-rano-gauge-svg" class="print-svg-box"></div>
+        </div>
+
+        ${rationaleHtml ? `
+          <div class="print-section print-section--keep">
+            <h3 class="print-section__title">Decision Rationale</h3>
+            <ul class="print-list">${rationaleHtml}</ul>
+          </div>
+        ` : ""}
+
+        ${warningsHtml ? `
+          <div class="print-section print-section--keep">
+            <h3 class="print-section__title">Clinical &amp; Methodological Notes</h3>
+            <ul class="print-list">${warningsHtml}</ul>
+          </div>
+        ` : ""}
+
+        ${res.reference?.citation ? `
+          <div class="print-section print-section--keep">
+            <h3 class="print-section__title">Primary Reference</h3>
+            <p class="print-hero__meta">${escapeHtml(res.reference.citation)}${res.reference.doi ? ` <code>doi:${escapeHtml(res.reference.doi)}</code>` : ""}</p>
+          </div>
+        ` : ""}
+
+        <footer class="print-footer-note">
+          Generated locally by CNS5-Audit &mdash; For Research &amp; Educational Use Only (Non-SaMD).
+        </footer>
+      </div>
+    `;
+
+    const gaugeTarget = document.getElementById("print-rano-gauge-svg");
+    if (gaugeTarget) {
+      if (sub === "rano_resect") {
+        renderResectGauge(gaugeTarget, res);
+      } else {
+        renderResponseGauge(gaugeTarget, sub, res);
+      }
+    }
+    return;
+  }
+
+  // Tab 3: Neuro-AI Audit Studio (CLAIM 2024 + TRIPOD+AI Scorecard)
+  const checklist = appState.auditChecklist;
+  const responses = appState.audit?.responses || {};
+  const meta = appState.audit?.studyMeta || createEmptyAuditMeta();
+  const score = appState.lastAuditScore || (checklist ? scoreAudit(checklist, responses) : null);
+
+  if (!checklist || !score) {
+    sheet.innerHTML = `<div class="print-doc">${disclaimerHtml}<p>Audit checklist data is not loaded.</p></div>`;
+    return;
+  }
+
+  const blockerCallout = score.blockerTriggered
+    ? `
+      <div class="print-callout print-callout--critical">
+        <strong>CRITICAL LEAKAGE BLOCKER CAP APPLIED (&le;${CRITICAL_BLOCKER_SCORE_CAP}/100):</strong>
+        ${escapeHtml(score.capReason || "")}
+      </div>
+    `
+    : score.criticalUnansweredWarning
+      ? `
+        <div class="print-callout print-callout--warn">
+          <strong>UNVERIFIED CRITICAL BLOCKERS:</strong>
+          ${escapeHtml(score.criticalUnansweredWarning)}
+        </div>
+      `
+      : "";
+
+  const domainRowsHtml = (score.domainScores || []).map((ds) => `
+    <tr>
+      <td><strong>${escapeHtml(ds.title)}</strong></td>
+      <td><strong>${ds.score}%</strong></td>
+      <td>${ds.answeredCount}/${ds.applicableCount}</td>
+      <td>${ds.passCount}</td>
+      <td>${ds.partialCount}</td>
+      <td>${ds.failCount}</td>
+      <td>${ds.criticalFailedCount > 0 ? `<strong>${ds.criticalFailedCount} BLOCKER</strong>` : "0"}</td>
+    </tr>
+  `).join("");
+
+  const statusLabels = { pass: "Pass", partial: "Partial", fail: "Fail", na: "N/A", unanswered: "Unanswered" };
+  const sevLabels = { critical: "Critical (3×)", major: "Major (2×)", recommended: "Rec. (1×)" };
+  const itemRowsHtml = (checklist.items || []).map((item) => {
+    const r = responses[item.id] || { status: "unanswered", evidence: "" };
+    const stLabel = statusLabels[r.status] || r.status;
+    const isBlocker = item.severity === "critical" && r.status === "fail";
+    const refs = [...(item.claim2024Refs || []), ...(item.tripodAiRefs || [])].join(", ");
+    return `
+      <tr>
+        <td><strong>${escapeHtml(item.id)}</strong></td>
+        <td>${escapeHtml(sevLabels[item.severity] || item.severity)}</td>
+        <td><strong>${escapeHtml(item.title)}</strong></td>
+        <td>${isBlocker ? `<strong>${escapeHtml(stLabel)} (Blocker)</strong>` : escapeHtml(stLabel)}</td>
+        <td>${escapeHtml(refs)}</td>
+        <td>${r.evidence && r.evidence.trim() ? escapeHtml(r.evidence.trim()) : "—"}</td>
+      </tr>
+    `;
+  }).join("");
+
+  sheet.innerHTML = `
+    <div class="print-doc">
+      <header class="print-masthead">
+        <div>
+          <div class="print-masthead__kicker">CNS5-Audit &middot; Module 03</div>
+          <h1 class="print-masthead__title">Neuro-AI Methodological &amp; Data-Leakage Audit Scorecard</h1>
+          <p class="print-masthead__sub">Mapped to CLAIM 2024 (Tejani et al., <em>Radiology: AI</em> 2024) &amp; TRIPOD+AI (Collins et al., <em>BMJ</em> 2024)</p>
+        </div>
+        <div class="print-masthead__stamp">
+          <div>Date: ${escapeHtml(stampDate)}</div>
+          <div>CNS5-Audit v1.0.0</div>
+        </div>
+      </header>
+
+      ${disclaimerHtml}
+
+      <div class="print-hero">
+        <div>
+          <div class="print-masthead__kicker">Manuscript / Study Peer-Review Scorecard</div>
+          <h2 class="print-hero__title">${escapeHtml(meta.title || "Untitled Neuro-AI Study")}</h2>
+          <p class="print-hero__meta">
+            <strong>Leakage Risk Tier:</strong> ${escapeHtml(score.leakageRiskLevel)} &middot;
+            <strong>Raw Score:</strong> ${score.rawOverallScore}/100 &middot;
+            <strong>Completion:</strong> ${score.completionPct}% (${score.counts.answered}/${score.counts.applicable} applicable) &middot;
+            <strong>CLAIM 2024:</strong> ${score.guidelineCoverage.claim2024.compliancePct}% &middot;
+            <strong>TRIPOD+AI:</strong> ${score.guidelineCoverage.tripodAi.compliancePct}%
+          </p>
+        </div>
+        <div class="print-badge">
+          <span class="print-badge__kicker">RIGOR SCORE</span>
+          <span class="print-badge__val">${score.overallScore} / 100</span>
+        </div>
+      </div>
+
+      ${blockerCallout}
+
+      <div class="print-section print-section--keep">
+        <h3 class="print-section__title">Study &amp; Peer-Review Metadata</h3>
+        <table class="print-table">
+          <tbody>
+            <tr>
+              <td style="width:22%"><strong>Authors / Year</strong></td>
+              <td style="width:28%">${escapeHtml(meta.authors || "Not specified")} (${escapeHtml(meta.year || "N/A")})</td>
+              <td style="width:22%"><strong>Task / Modality</strong></td>
+              <td style="width:28%">${escapeHtml(meta.taskType || "Not specified")} &middot; ${escapeHtml(meta.modality || "Not specified")}</td>
+            </tr>
+            <tr>
+              <td><strong>Cohort Summary</strong></td>
+              <td>${escapeHtml(meta.cohortSummary || "Not specified")}</td>
+              <td><strong>Auditor / Reviewer</strong></td>
+              <td>${escapeHtml(meta.reviewer || "Not specified")}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="print-section print-section--keep">
+        <h3 class="print-section__title">6-Axis Domain Rigor Profile &amp; Breakdown</h3>
+        <div class="print-audit-visuals">
+          <div id="print-audit-radar-svg" class="print-svg-box"></div>
+          <div>
+            <div id="print-audit-badge-svg" style="margin-bottom:6pt"></div>
+            <table class="print-table">
+              <thead>
+                <tr>
+                  <th>Domain</th>
+                  <th>Score</th>
+                  <th>Ans.</th>
+                  <th>P</th>
+                  <th>Pt</th>
+                  <th>F</th>
+                  <th>Blockers</th>
+                </tr>
+              </thead>
+              <tbody>${domainRowsHtml}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="print-section">
+        <h3 class="print-section__title">Complete 36-Item Neuro-AI Audit Matrix</h3>
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th style="width:7%">ID</th>
+              <th style="width:11%">Severity</th>
+              <th style="width:25%">Criterion</th>
+              <th style="width:11%">Status</th>
+              <th style="width:18%">CLAIM / TRIPOD+AI</th>
+              <th style="width:28%">Evidence / Reviewer Notes</th>
+            </tr>
+          </thead>
+          <tbody>${itemRowsHtml}</tbody>
+        </table>
+      </div>
+
+      <footer class="print-footer-note">
+        Standards: CLAIM 2024 (doi:10.1148/ryai.240300) &amp; TRIPOD+AI (doi:10.1136/bmj-2023-078378). Generated locally by CNS5-Audit (Non-SaMD).
+      </footer>
+    </div>
+  `;
+
+  const radarTarget = document.getElementById("print-audit-radar-svg");
+  if (radarTarget) {
+    renderRadarChart(radarTarget, score.domainScores, {
+      riskLevel: score.leakageRiskLevel,
+      overallScore: score.overallScore,
+      capApplied: score.capApplied
+    });
+  }
+  const badgeTarget = document.getElementById("print-audit-badge-svg");
+  if (badgeTarget) {
+    const printBadgeSvg = exportAuditBadgeSvg(score, meta).replace(/cns5-badge-clip/g, "cns5-print-badge-clip");
+    mountSanitizedSvgString(badgeTarget, printBadgeSvg);
   }
 }
 
@@ -2983,12 +3908,39 @@ function wireAuditEvents() {
    ========================================================================== */
 
 function wireGlobalControls() {
-  // Primary tabs
+  // Primary tabs (click + WAI-ARIA arrow/Home/End keyboard navigation)
   document.querySelectorAll(".studio-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
       switchPrimaryTab(btn.dataset.tab, true);
     });
   });
+
+  wireTablistKeyboard(document.querySelector(".studio-tabs"), (nextTab) => {
+    switchPrimaryTab(nextTab.dataset.tab, true);
+  });
+
+  // Mobile summary strip quick-jump to active output card
+  const mobileStrip = document.getElementById("mobile-summary-strip");
+  if (mobileStrip) {
+    mobileStrip.addEventListener("click", (e) => {
+      const jumpBtn = e.target.closest("[data-mobile-jump]");
+      if (!jumpBtn) return;
+      const targetEl = document.getElementById(jumpBtn.dataset.mobileJump);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  }
+
+  // Print / Save PDF formatted summary
+  const printBtn = document.getElementById("print-summary-btn");
+  if (printBtn) {
+    printBtn.addEventListener("click", () => {
+      renderPrintSummarySheet();
+      window.print();
+    });
+  }
+  window.addEventListener("beforeprint", renderPrintSummarySheet);
 
   // Theme toggle
   const themeBtn = document.getElementById("theme-toggle-btn");
@@ -3098,6 +4050,10 @@ function hydrateSavedStates() {
   const savedRano = readStorage(STORAGE_KEYS.ranoState, null);
   const defaultRano = createDefaultRanoState();
   if (savedRano && typeof savedRano === "object") {
+    const mergedBm = { ...defaultRano.ranoBm, ...(savedRano.ranoBm || {}) };
+    if (!Array.isArray(mergedBm.targetLesions) || mergedBm.targetLesions.length === 0) {
+      mergedBm.targetLesions = defaultRano.ranoBm.targetLesions.map((l) => ({ ...l }));
+    }
     appState.rano = {
       activeSubTab: ["rano2", "rano_bm", "rano_resect"].includes(savedRano.activeSubTab)
         ? savedRano.activeSubTab
@@ -3108,7 +4064,7 @@ function hydrateSavedStates() {
         ? savedRano.rano2Lesions
         : defaultRano.rano2Lesions,
       ranoBmMode: savedRano.ranoBmMode === "sld" ? "sld" : "lesions",
-      ranoBm: { ...defaultRano.ranoBm, ...(savedRano.ranoBm || {}) },
+      ranoBm: mergedBm,
       ranoResect: { ...defaultRano.ranoResect, ...(savedRano.ranoResect || {}) }
     };
   } else {
@@ -3195,8 +4151,9 @@ async function init() {
   renderAuditChecklist();
   renderAuditOutputs();
 
-  // Activate saved or default primary tab
+  // Activate saved or default primary tab & prime print summary sheet
   switchPrimaryTab(appState.activeTab, false);
+  renderPrintSummarySheet();
 }
 
 if (document.readyState === "loading") {

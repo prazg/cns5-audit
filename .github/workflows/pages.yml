@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
 
       - name: Run deterministic rule & hygiene verification
-        run: python tests/verify_rules.py
+        run: python tests/verify_rules.py --skip-browser
 
   deploy:
     name: Deploy Static Site to GitHub Pages

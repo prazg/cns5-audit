@@ -1251,6 +1251,11 @@ function classifyAdultDiffuseGlioma(raw, rulesData) {
   const warnings = [];
   const refIds = ["louis2021"];
 
+  if (s.age_years !== null && s.age_years < 0) {
+    s.age_years = null;
+    pushUnique(warnings, "Invalid negative patient age ignored; enter a non-negative age in years.");
+  }
+
   let diagnosis = "";
   let entityId = "";
   let cnsWhoGrade = "Not assigned";

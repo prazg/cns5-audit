@@ -303,6 +303,8 @@ export function renderDecisionTrace(containerEl, cns5Result, options = {}) {
     }
   };
 
+  const rawPrefix = String(options.idPrefix || containerEl.id || "cns5").replace(/[^a-zA-Z0-9_-]/g, "-");
+  const markerId = `${rawPrefix}-trace-arrow`;
   const parts = [];
   const totalSteps = path.length;
 
@@ -402,7 +404,7 @@ export function renderDecisionTrace(containerEl, cns5Result, options = {}) {
       const arrowY1 = cursorY + nodeH;
       const arrowY2 = cursorY + nodeH + gapY - 3;
       parts.push(
-        `<line x1="260" y1="${arrowY1}" x2="260" y2="${arrowY2}" stroke="var(--border-strong)" stroke-width="1.8" marker-end="url(#cns5-trace-arrow)"/>`
+        `<line x1="260" y1="${arrowY1}" x2="260" y2="${arrowY2}" stroke="var(--border-strong)" stroke-width="1.8" marker-end="url(#${escapeXml(markerId)})"/>`
       );
     }
 
@@ -415,7 +417,7 @@ export function renderDecisionTrace(containerEl, cns5Result, options = {}) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 ${totalH}" role="img" aria-label="${escapeXml(ariaSummary)}">
   <title>${escapeXml(ariaSummary)}</title>
   <defs>
-    <marker id="cns5-trace-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+    <marker id="${escapeXml(markerId)}" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
       <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="var(--border-strong)"/>
     </marker>
   </defs>

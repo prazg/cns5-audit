@@ -87,7 +87,7 @@
         </div>
       </div>
 
-      <nav class="studio-tabs" role="tablist" aria-label="Primary studio modules">
+      <div class="studio-tabs" role="tablist" aria-label="Primary studio modules">
         <button
           type="button"
           id="tab-btn-cns5"
@@ -95,6 +95,7 @@
           role="tab"
           aria-selected="true"
           aria-controls="panel-cns5"
+          tabindex="0"
           data-tab="cns5"
         >
           <span class="studio-tab__index">01</span>
@@ -111,6 +112,7 @@
           role="tab"
           aria-selected="false"
           aria-controls="panel-rano"
+          tabindex="-1"
           data-tab="rano"
         >
           <span class="studio-tab__index">02</span>
@@ -127,6 +129,7 @@
           role="tab"
           aria-selected="false"
           aria-controls="panel-audit"
+          tabindex="-1"
           data-tab="audit"
         >
           <span class="studio-tab__index">03</span>
@@ -135,9 +138,22 @@
             <span class="studio-tab__meta">CLAIM 2024 &middot; TRIPOD+AI</span>
           </span>
         </button>
-      </nav>
+      </div>
 
       <div class="header-actions">
+        <button
+          type="button"
+          id="print-summary-btn"
+          class="btn btn--secondary btn--sm"
+          aria-label="Print or save formatted PDF summary of active studio tab"
+          title="Print or Save PDF formatted summary of the active tab"
+        >
+          <svg class="icon icon--xs" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M4 5.5V2h8v3.5M4 12H2.5A1.5 1.5 0 0 1 1 10.5v-3A1.5 1.5 0 0 1 2.5 6h11A1.5 1.5 0 0 1 15 7.5v3a1.5 1.5 0 0 1-1.5 1.5H12M4 9.5h8V14H4V9.5z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Print / Save PDF</span>
+        </button>
+
         <button
           type="button"
           id="theme-toggle-btn"
@@ -179,6 +195,7 @@
       class="tab-panel is-active"
       role="tabpanel"
       aria-labelledby="tab-btn-cns5"
+      tabindex="0"
       data-panel="cns5"
     >
       <div class="panel-intro">
@@ -214,7 +231,7 @@
       <div id="cns5-family-selector" class="family-grid" role="tablist" aria-label="WHO CNS5 tumor families"></div>
 
       <!-- Two-Column Studio Grid -->
-      <div class="studio-grid studio-grid--cns5">
+      <div id="cns5-family-panel" class="studio-grid studio-grid--cns5" role="tabpanel" aria-labelledby="cns5-family-tab-adult_diffuse_glioma">
         <!-- Left: Dynamic Histological & Molecular Form + Family Reference Drawer -->
         <div class="studio-col studio-col--primary">
           <div class="card">
@@ -266,6 +283,7 @@
       class="tab-panel"
       role="tabpanel"
       aria-labelledby="tab-btn-rano"
+      tabindex="0"
       data-panel="rano"
       hidden
     >
@@ -278,19 +296,20 @@
             <strong>RANO-Resect</strong> (Karschnia et al., <em>Neuro-Oncology</em> 2023).
           </p>
         </div>
-        <div class="segmented-control" role="tablist" aria-label="RANO calculator standard">
-          <button type="button" class="segmented-control__btn is-active" role="tab" aria-selected="true" data-rano-tab="rano2">
+        <div id="rano-sub-tablist" class="segmented-control" role="tablist" aria-label="RANO calculator standard">
+          <button type="button" id="rano-tab-rano2" class="segmented-control__btn is-active" role="tab" aria-selected="true" aria-controls="rano-subpanel" tabindex="0" data-rano-tab="rano2">
             RANO 2.0
           </button>
-          <button type="button" class="segmented-control__btn" role="tab" aria-selected="false" data-rano-tab="rano_bm">
+          <button type="button" id="rano-tab-rano_bm" class="segmented-control__btn" role="tab" aria-selected="false" aria-controls="rano-subpanel" tabindex="-1" data-rano-tab="rano_bm">
             RANO-BM
           </button>
-          <button type="button" class="segmented-control__btn" role="tab" aria-selected="false" data-rano-tab="rano_resect">
+          <button type="button" id="rano-tab-rano_resect" class="segmented-control__btn" role="tab" aria-selected="false" aria-controls="rano-subpanel" tabindex="-1" data-rano-tab="rano_resect">
             RANO-Resect
           </button>
         </div>
       </div>
 
+      <div id="rano-subpanel" role="tabpanel" aria-labelledby="rano-tab-rano2">
       <!-- Clinical Scenario Presets -->
       <div class="card card--compact vignette-bar" aria-label="RANO clinical scenario presets">
         <div class="vignette-bar__header">
@@ -330,6 +349,7 @@
           <div id="rano-rationale-card" class="card"></div>
         </aside>
       </div>
+      </div>
     </section>
 
     <!-- =================================================================== -->
@@ -340,6 +360,7 @@
       class="tab-panel"
       role="tabpanel"
       aria-labelledby="tab-btn-audit"
+      tabindex="0"
       data-panel="audit"
       hidden
     >
@@ -414,6 +435,35 @@
       <!-- Critical Blocker Warning Banner (visible when any Critical Blocker fails) -->
       <div id="audit-blocker-banner" class="blocker-banner" role="alert" hidden></div>
 
+      <!-- Interactive Domain Progress & Quick-Jump Action Bar -->
+      <div id="audit-progress-bar" class="card card--compact audit-quickbar" role="region" aria-label="Domain progress and peer-review quick navigation">
+        <div class="audit-quickbar__head">
+          <div class="audit-quickbar__summary">
+            <span class="eyebrow">Domain Progress &amp; Quick-Jump</span>
+            <span id="audit-quickbar-status" class="audit-quickbar__status">0 / 36 applicable answered</span>
+          </div>
+          <div class="audit-quickbar__actions">
+            <button
+              type="button"
+              id="audit-next-unanswered-btn"
+              class="btn btn--primary btn--sm"
+              title="Jump to the next unanswered checklist item and focus its grading controls"
+            >
+              Next Unanswered Item
+            </button>
+            <button
+              type="button"
+              id="audit-jump-blockers-btn"
+              class="btn btn--secondary btn--sm btn--blocker-nav"
+              title="Cycle through failed or unverified Critical Blocker items"
+            >
+              Jump to Critical Blockers
+            </button>
+          </div>
+        </div>
+        <div id="audit-domain-progress-pills" class="domain-progress-grid" role="group" aria-label="Per-domain completion progress"></div>
+      </div>
+
       <!-- Two-Column Studio Grid -->
       <div class="studio-grid studio-grid--audit">
         <!-- Left: Domain-Filtered 36-Item Checklist -->
@@ -453,7 +503,7 @@
             </div>
           </div>
 
-          <div id="audit-checklist-container" class="checklist-list"></div>
+          <div id="audit-checklist-container" class="checklist-list" role="tabpanel" aria-labelledby="audit-domain-tab-all"></div>
         </div>
 
         <!-- Right Sticky: Live Rigor Scorecard, 6-Axis Radar Chart & Export Studio -->
@@ -505,11 +555,11 @@
 
             <details class="export-preview-disclosure" id="audit-export-preview-disclosure">
               <summary class="export-preview-disclosure__summary">Inspect Export Source Preview</summary>
-              <div class="export-preview-tabs">
-                <button type="button" class="mini-tab is-active" data-preview-fmt="md">Markdown</button>
-                <button type="button" class="mini-tab" data-preview-fmt="tex">LaTeX (longtable)</button>
+              <div id="audit-export-preview-tabs" class="export-preview-tabs" role="tablist" aria-label="Export preview format">
+                <button type="button" id="preview-tab-md" class="mini-tab is-active" role="tab" aria-selected="true" aria-controls="audit-export-preview-code" tabindex="0" data-preview-fmt="md">Markdown</button>
+                <button type="button" id="preview-tab-tex" class="mini-tab" role="tab" aria-selected="false" aria-controls="audit-export-preview-code" tabindex="-1" data-preview-fmt="tex">LaTeX (longtable)</button>
               </div>
-              <pre id="audit-export-preview-code" class="code-preview"></pre>
+              <pre id="audit-export-preview-code" class="code-preview" role="tabpanel" aria-labelledby="preview-tab-md" tabindex="0"></pre>
             </details>
           </div>
 
@@ -518,6 +568,9 @@
       </div>
     </section>
   </main>
+
+  <!-- Publication-Clean Print / Save PDF Formatted Summary Sheet (visible in @media print) -->
+  <section id="print-summary-sheet" class="print-sheet" aria-label="Printable clinical and peer-review summary"></section>
 
   <!-- Studio Footer -->
   <footer class="studio-footer">
