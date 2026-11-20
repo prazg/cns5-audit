@@ -1,0 +1,164 @@
+cff-version: 1.2.0
+title: "CNS5-Audit: Integrated WHO CNS5 Classification, Multi-Standard RANO Calculators, and Neuro-AI Data-Leakage Auditing Suite"
+message: "If you use CNS5-Audit in your clinical research, peer review, methodological audit, or educational materials, please cite this software using the metadata below."
+type: software
+version: "1.0.0"
+date-released: "2026-11-20"
+license: MIT
+authors:
+  - name: "CNS5-Audit Contributors"
+abstract: >-
+  CNS5-Audit is an open-source, zero-build, 100% browser-local web suite that
+  unifies three core neuro-oncology research and peer-review workflows:
+  (1) a deterministic WHO CNS5 (2021) integrated molecular-histological tumor
+  classifier covering all major CNS tumor families with mandatory Arabic-numeral
+  grading, molecular upgrade tracking, and NOS/NEC guidance;
+  (2) multi-standard clinical response and resection calculators implementing
+  RANO 2.0, RANO-BM, and RANO-Resect with strict monotonicity, baseline, and
+  volumetric boundary guards; and
+  (3) a 36-item Neuro-AI data-leakage and reporting auditor cross-mapped to
+  CLAIM 2024 and TRIPOD+AI with an automated Critical Blocker score cap and
+  publication-ready Markdown, LaTeX, SVG badge, and JSON exporters.
+  All computation executes locally in the browser with zero external uploads.
+  For research and educational use only; not a certified medical device.
+keywords:
+  - WHO CNS5
+  - neuro-oncology
+  - glioma
+  - RANO 2.0
+  - RANO-BM
+  - RANO-Resect
+  - CLAIM 2024
+  - TRIPOD+AI
+  - data leakage
+  - radiomics
+  - neuro-AI
+  - clinical research software
+  - open science
+  - peer review
+references:
+  - type: article
+    title: "The 2021 WHO Classification of Tumors of the Central Nervous System: a summary"
+    authors:
+      - family-names: "Louis"
+        given-names: "David N."
+      - family-names: "Perry"
+        given-names: "Arie"
+      - family-names: "Wesseling"
+        given-names: "Pieter"
+      - family-names: "Brat"
+        given-names: "Daniel J."
+      - family-names: "Cree"
+        given-names: "Ian A."
+      - family-names: "Figarella-Branger"
+        given-names: "Dominique"
+      - family-names: "Hawkins"
+        given-names: "Cynthia"
+      - family-names: "Ng"
+        given-names: "Ho-Keung"
+      - family-names: "Pfister"
+        given-names: "Stefan M."
+      - family-names: "Reifenberger"
+        given-names: "Guido"
+      - family-names: "Soffietti"
+        given-names: "Riccardo"
+      - name-particle: "von"
+        family-names: "Deimling"
+        given-names: "Andreas"
+      - family-names: "Ellison"
+        given-names: "David W."
+    journal: "Neuro-Oncology"
+    year: 2021
+    volume: 23
+    issue: 8
+    start: 1231
+    end: 1251
+    doi: "10.1093/neuonc/noab106"
+  - type: article
+    title: "RANO 2.0: Update to the Response Assessment in Neuro-Oncology Criteria for High- and Low-Grade Gliomas in Adults"
+    authors:
+      - family-names: "Wen"
+        given-names: "Patrick Y."
+      - name-particle: "van den"
+        family-names: "Bent"
+        given-names: "Martin"
+      - family-names: "Youssef"
+        given-names: "Gilbert"
+      - name: "Response Assessment in Neuro-Oncology (RANO) Working Group"
+    journal: "Journal of Clinical Oncology"
+    year: 2023
+    volume: 41
+    issue: 33
+    start: 5187
+    end: 5199
+    doi: "10.1200/JCO.23.01059"
+  - type: article
+    title: "Response assessment criteria for brain metastases: proposal from the RANO group"
+    authors:
+      - family-names: "Lin"
+        given-names: "Nancy U."
+      - family-names: "Lee"
+        given-names: "Eudocia Q."
+      - family-names: "Aoyama"
+        given-names: "Hidefumi"
+      - name: "Response Assessment in Neuro-Oncology (RANO) Group"
+    journal: "The Lancet Oncology"
+    year: 2015
+    volume: 16
+    issue: 6
+    start: "e270"
+    end: "e278"
+    doi: "10.1016/S1470-2045(15)70057-4"
+  - type: article
+    title: "Prognostic validation of a new classification system for extent of resection in glioblastoma: a report of the RANO resect group"
+    authors:
+      - family-names: "Karschnia"
+        given-names: "Philipp"
+      - family-names: "Young"
+        given-names: "Jacob S."
+      - family-names: "Dono"
+        given-names: "Antonio"
+      - name: "RANO Resect Group"
+    journal: "Neuro-Oncology"
+    year: 2023
+    volume: 25
+    issue: 5
+    start: 940
+    end: 954
+    doi: "10.1093/neuonc/noac193"
+  - type: article
+    title: "Checklist for Artificial Intelligence in Medical Imaging (CLAIM): 2024 Update"
+    authors:
+      - family-names: "Tejani"
+        given-names: "Ali S."
+      - family-names: "Klontzas"
+        given-names: "Michail E."
+      - family-names: "Gatti"
+        given-names: "Anthony A."
+      - family-names: "Kahn"
+        given-names: "Charles E."
+        name-suffix: "Jr."
+      - family-names: "Mongan"
+        given-names: "John"
+      - name: "CLAIM 2024 Update Panel"
+    journal: "Radiology: Artificial Intelligence"
+    year: 2024
+    volume: 6
+    issue: 4
+    start: "e240300"
+    doi: "10.1148/ryai.240300"
+  - type: article
+    title: "TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use regression or machine learning methods"
+    authors:
+      - family-names: "Collins"
+        given-names: "Gary S."
+      - family-names: "Moons"
+        given-names: "Karel G. M."
+      - family-names: "Dhiman"
+        given-names: "Paula"
+      - name: "TRIPOD+AI Writing Group"
+    journal: "BMJ"
+    year: 2024
+    volume: 385
+    start: "e078378"
+    doi: "10.1136/bmj-2023-078378"

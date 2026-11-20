@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CNS5-Audit: Zero-build, 100% browser-local neuro-oncology research & peer-review studio uniting WHO CNS5 (2021) integrated tumor classification, RANO 2.0 / RANO-BM / RANO-Resect clinical calculators, and CLAIM 2024 + TRIPOD+AI Neuro-AI leakage auditing.">
+  <meta name="color-scheme" content="light dark">
+  <title>CNS5-Audit — Neuro-Oncology Classification, RANO &amp; AI Rigor Studio</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("cns5audit.v1.theme");
+        var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme = (saved === "dark" || saved === "light") ? saved : (prefersDark ? "dark" : "light");
+        document.documentElement.dataset.theme = theme;
+      } catch (_err) {
+        document.documentElement.dataset.theme = "light";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-workspace">Skip to main studio workspace</a>
+
+  <!-- Mandatory Persistent Non-Dismissible Clinical Compliance & Privacy Bar -->
+  <div class="compliance-bar" role="region" aria-label="Research disclaimer and local privacy notice">
+    <div class="compliance-bar__inner">
+      <div class="compliance-bar__notice">
+        <span class="compliance-pill compliance-pill--warn" aria-hidden="true">NON-SaMD</span>
+        <p class="compliance-bar__text">
+          <strong>For Research &amp; Educational Use Only — Not a Certified Medical Device.</strong>
+          Do not enter patient-identifying data (PHI). All calculations and audits execute
+          <strong>100% locally in your browser</strong> (zero external uploads).
+        </p>
+      </div>
+      <div class="compliance-bar__badges">
+        <span class="privacy-badge" title="Zero external runtime dependencies, zero network telemetry, and zero PHI uploads">
+          <svg class="icon icon--xs" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+            <path d="M8 1.5L2.5 3.8v4.1c0 3.4 2.3 6.2 5.5 7.1 3.2-.9 5.5-3.7 5.5-7.1V3.8L8 1.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M5.6 8.1l1.7 1.7 3.3-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>100% Browser-Local &middot; Zero PHI Uploads</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Navigation & Controls Header -->
+  <header class="studio-header">
+    <div class="studio-header__inner">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" width="32" height="32" focusable="false">
+            <rect x="1" y="1" width="34" height="34" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+            <polygon points="18,6 28,11.8 28,24.2 18,30 8,24.2 8,11.8" fill="none" stroke="var(--accent)" stroke-width="1.75"/>
+            <polygon points="18,11 23.5,14.2 23.5,21.8 18,25 12.5,21.8 12.5,14.2" fill="var(--accent)" fill-opacity="0.22" stroke="var(--clinical-blue)" stroke-width="1.2"/>
+            <circle cx="18" cy="18" r="2.6" fill="var(--accent)"/>
+          </svg>
+        </div>
+        <div class="brand__copy">
+          <div class="brand__title-row">
+            <h1 class="brand__title">CNS5-Audit</h1>
+            <span class="version-pill">v1.0.0</span>
+          </div>
+          <p class="brand__subtitle">Neuro-Oncology Classification, RANO &amp; AI Rigor Studio</p>
+        </div>
+      </div>
+
+      <nav class="studio-tabs" role="tablist" aria-label="Primary studio modules">
+        <button
+          type="button"
+          id="tab-btn-cns5"
+          class="studio-tab is-active"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-cns5"
+          data-tab="cns5"
+        >
+          <span class="studio-tab__index">01</span>
+          <span class="studio-tab__body">
+            <span class="studio-tab__label">WHO CNS5 Classifier</span>
+            <span class="studio-tab__meta">2021 Integrated &middot; 7 Families</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          id="tab-btn-rano"
+          class="studio-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-rano"
+          data-tab="rano"
+        >
+          <span class="studio-tab__index">02</span>
+          <span class="studio-tab__body">
+            <span class="studio-tab__label">RANO Calculators</span>
+            <span class="studio-tab__meta">RANO 2.0 &middot; BM &middot; Resect</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
+          id="tab-btn-audit"
+          class="studio-tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-audit"
+          data-tab="audit"
+        >
+          <span class="studio-tab__index">03</span>
+          <span class="studio-tab__body">
+            <span class="studio-tab__label">Neuro-AI Audit Studio</span>
+            <span class="studio-tab__meta">CLAIM 2024 &middot; TRIPOD+AI</span>
+          </span>
+        </button>
+      </nav>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          id="theme-toggle-btn"
+          class="btn btn--ghost btn--sm"
+          aria-pressed="false"
+          aria-label="Toggle dark and light theme"
+          title="Switch Light / Dark studio theme"
+        >
+          <span id="theme-toggle-icon" aria-hidden="true">&#9790;</span>
+          <span id="theme-toggle-label">Dark Mode</span>
+        </button>
+
+        <button
+          type="button"
+          id="reset-state-btn"
+          class="btn btn--ghost btn--sm btn--danger-subtle"
+          title="Clear all locally stored CNS5-Audit state"
+        >
+          Reset Local State
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Inline Runtime / File-Protocol Notice Banner (populated only if data fetch fails) -->
+  <div id="runtime-banner" class="runtime-banner" role="alert" hidden></div>
+
+  <!-- Compact Mobile Summary Strip (visible < 1024px) -->
+  <div id="mobile-summary-strip" class="mobile-summary-strip" aria-live="polite"></div>
+
+  <!-- Main Workspace -->
+  <main id="main-workspace" class="workspace">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: WHO CNS5 (2021) INTEGRATED CLASSIFIER                        -->
+    <!-- =================================================================== -->
+    <section
+      id="panel-cns5"
+      class="tab-panel is-active"
+      role="tabpanel"
+      aria-labelledby="tab-btn-cns5"
+      data-panel="cns5"
+    >
+      <div class="panel-intro">
+        <div>
+          <h2 class="panel-title">WHO CNS5 (2021) Integrated Molecular-Histological Classifier</h2>
+          <p class="panel-desc">
+            Deterministic layered neuropathology classification across 7 CNS5 tumor families with Arabic-numeral grading,
+            molecular grade-upgrade detection, NOS/NEC guidance, and decision-path tracing.
+          </p>
+        </div>
+        <div class="panel-intro__actions">
+          <button type="button" id="cns5-reset-family-btn" class="btn btn--secondary btn--sm">
+            Reset Active Family
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick-Load Teaching Vignettes -->
+      <div class="card card--compact vignette-bar" aria-label="Curated clinical teaching vignettes">
+        <div class="vignette-bar__header">
+          <div class="vignette-bar__title-group">
+            <span class="eyebrow">Quick-Load Teaching Vignettes</span>
+            <span id="cns5-vignette-count" class="count-pill">10 Cases</span>
+          </div>
+          <span id="cns5-vignette-active-desc" class="vignette-bar__desc">
+            Select a curated neuropathology teaching case to inspect molecular upgrades, NOS/NEC rules, and therapeutic pearls.
+          </span>
+        </div>
+        <div id="cns5-vignette-chips" class="chip-strip" role="group" aria-label="Teaching vignette presets"></div>
+      </div>
+
+      <!-- 7 Tumor Family Selector -->
+      <div id="cns5-family-selector" class="family-grid" role="tablist" aria-label="WHO CNS5 tumor families"></div>
+
+      <!-- Two-Column Studio Grid -->
+      <div class="studio-grid studio-grid--cns5">
+        <!-- Left: Dynamic Histological & Molecular Form + Family Reference Drawer -->
+        <div class="studio-col studio-col--primary">
+          <div class="card">
+            <div class="card__header">
+              <div>
+                <span class="eyebrow" id="cns5-family-eyebrow">Tumor Family Profile</span>
+                <h3 class="card__title" id="cns5-family-heading">Adult-Type Diffuse Gliomas</h3>
+                <p class="card__subtitle" id="cns5-family-description"></p>
+              </div>
+              <span class="mono-tag" id="cns5-family-id-tag">adult_diffuse_glioma</span>
+            </div>
+            <div id="cns5-form-container" class="cns5-form"></div>
+          </div>
+
+          <details class="card reference-drawer" id="cns5-entities-drawer">
+            <summary class="reference-drawer__summary">
+              <span>WHO CNS5 Entity Reference &amp; Hallmarks for Active Family</span>
+              <span id="cns5-entities-count" class="count-pill">0 entities</span>
+            </summary>
+            <div id="cns5-entities-list" class="entities-list"></div>
+          </details>
+        </div>
+
+        <!-- Right Sticky: Integrated Diagnosis Dashboard + Decision Trace + Pearls -->
+        <aside class="studio-col studio-col--sticky" aria-label="Integrated diagnosis output">
+          <div id="cns5-diagnosis-card" class="card diagnosis-card" aria-live="polite"></div>
+
+          <div class="card">
+            <div class="card__header card__header--tight">
+              <div>
+                <span class="eyebrow">Diagnostic Audit Trail</span>
+                <h3 class="card__title">Interactive Decision Path Trace</h3>
+              </div>
+              <span class="mono-tag">WHO CNS5</span>
+            </div>
+            <div id="cns5-decision-trace" class="svg-stage"></div>
+          </div>
+
+          <div id="cns5-details-card" class="card"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: MULTI-STANDARD RANO CLINICAL CALCULATORS                     -->
+    <!-- =================================================================== -->
+    <section
+      id="panel-rano"
+      class="tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-btn-rano"
+      data-panel="rano"
+      hidden
+    >
+      <div class="panel-intro">
+        <div>
+          <h2 class="panel-title">Multi-Standard Neuro-Oncology Clinical Calculators</h2>
+          <p class="panel-desc">
+            Live deterministic evaluation across <strong>RANO 2.0</strong> (Wen et al., <em>JCO</em> 2023),
+            <strong>RANO-BM</strong> (Lin et al., <em>Lancet Oncol</em> 2015), and
+            <strong>RANO-Resect</strong> (Karschnia et al., <em>Neuro-Oncology</em> 2023).
+          </p>
+        </div>
+        <div class="segmented-control" role="tablist" aria-label="RANO calculator standard">
+          <button type="button" class="segmented-control__btn is-active" role="tab" aria-selected="true" data-rano-tab="rano2">
+            RANO 2.0
+          </button>
+          <button type="button" class="segmented-control__btn" role="tab" aria-selected="false" data-rano-tab="rano_bm">
+            RANO-BM
+          </button>
+          <button type="button" class="segmented-control__btn" role="tab" aria-selected="false" data-rano-tab="rano_resect">
+            RANO-Resect
+          </button>
+        </div>
+      </div>
+
+      <!-- Clinical Scenario Presets -->
+      <div class="card card--compact vignette-bar" aria-label="RANO clinical scenario presets">
+        <div class="vignette-bar__header">
+          <div class="vignette-bar__title-group">
+            <span class="eyebrow">Clinical Scenario Presets</span>
+            <span id="rano-standard-pill" class="count-pill">RANO 2.0</span>
+          </div>
+          <span id="rano-preset-desc" class="vignette-bar__desc">
+            Load canonical clinical edge cases to verify threshold boundaries, monotonicity rules, and clinical guards.
+          </span>
+        </div>
+        <div id="rano-preset-chips" class="chip-strip" role="group" aria-label="Scenario presets"></div>
+      </div>
+
+      <!-- Two-Column Studio Grid -->
+      <div class="studio-grid studio-grid--rano">
+        <!-- Left: Active RANO Form -->
+        <div class="studio-col studio-col--primary">
+          <div id="rano-form-card" class="card"></div>
+        </div>
+
+        <!-- Right Sticky: Live Response/Resect Dashboard + Gauge + Rationale -->
+        <aside class="studio-col studio-col--sticky" aria-label="RANO calculation output">
+          <div id="rano-result-card" class="card" aria-live="polite"></div>
+
+          <div class="card">
+            <div class="card__header card__header--tight">
+              <div>
+                <span class="eyebrow" id="rano-gauge-eyebrow">Quantitative Scale</span>
+                <h3 class="card__title" id="rano-gauge-title">Response Threshold Gauge</h3>
+              </div>
+              <span class="mono-tag" id="rano-gauge-tag">LIVE SVG</span>
+            </div>
+            <div id="rano-gauge-stage" class="svg-stage"></div>
+          </div>
+
+          <div id="rano-rationale-card" class="card"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: NEURO-AI LEAKAGE & REPORTING AUDITOR                         -->
+    <!-- =================================================================== -->
+    <section
+      id="panel-audit"
+      class="tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-btn-audit"
+      data-panel="audit"
+      hidden
+    >
+      <div class="panel-intro">
+        <div>
+          <h2 class="panel-title">Neuro-AI Leakage &amp; Methodological Rigor Auditor</h2>
+          <p class="panel-desc">
+            36 curated neuroimaging &amp; neuro-oncology AI peer-review checks mapped to
+            <strong>CLAIM 2024</strong> &amp; <strong>TRIPOD+AI</strong> with automated Critical Blocker score capping (&le;45/100)
+            and publication-ready Markdown, LaTeX, and SVG exports.
+          </p>
+        </div>
+        <div class="panel-intro__actions">
+          <span id="audit-autosave-indicator" class="autosave-pill" aria-live="polite">Autosaved locally</span>
+          <button type="button" id="audit-export-json-btn" class="btn btn--secondary btn--sm">Export JSON</button>
+          <button type="button" id="audit-import-json-btn" class="btn btn--secondary btn--sm">Import JSON</button>
+          <input type="file" id="audit-import-file-input" accept=".json,application/json" hidden>
+        </div>
+      </div>
+
+      <!-- JSON Import Feedback Banner -->
+      <div id="audit-import-feedback" class="inline-feedback" role="status" hidden></div>
+
+      <!-- Preset Selector & Study Metadata Bar -->
+      <div class="card audit-meta-card">
+        <div class="audit-presets-row">
+          <div class="audit-presets-row__label">
+            <span class="eyebrow">Example Audit Presets</span>
+            <p id="audit-preset-description" class="card__subtitle"></p>
+          </div>
+          <div id="audit-preset-buttons" class="btn-group" role="group" aria-label="Audit example presets"></div>
+        </div>
+
+        <details class="meta-disclosure" open>
+          <summary class="meta-disclosure__summary">
+            <span>Study &amp; Manuscript Metadata</span>
+            <span class="mono-tag">Included in MD / LaTeX / JSON Exports</span>
+          </summary>
+          <div id="audit-meta-form" class="meta-grid">
+            <label class="field field--span-2">
+              <span class="field__label">Manuscript / Study Title</span>
+              <input type="text" id="meta-title" data-meta-key="title" class="input" placeholder="e.g., Multi-Center 3D Radiogenomic Classification Under WHO CNS5...">
+            </label>
+            <label class="field">
+              <span class="field__label">Authors</span>
+              <input type="text" id="meta-authors" data-meta-key="authors" class="input" placeholder="e.g., Smith J, Patel R, et al.">
+            </label>
+            <label class="field field--narrow">
+              <span class="field__label">Year</span>
+              <input type="text" id="meta-year" data-meta-key="year" class="input input--mono" placeholder="2025" maxlength="12">
+            </label>
+            <label class="field">
+              <span class="field__label">Neuro-AI Task Type</span>
+              <input type="text" id="meta-taskType" data-meta-key="taskType" class="input" placeholder="e.g., Radiogenomics / Segmentation / Survival">
+            </label>
+            <label class="field">
+              <span class="field__label">Imaging Modality</span>
+              <input type="text" id="meta-modality" data-meta-key="modality" class="input" placeholder="e.g., 3T Multi-parametric MRI (T1+C, FLAIR)">
+            </label>
+            <label class="field field--span-2">
+              <span class="field__label">Cohort Summary (De-Identified Aggregate Counts Only — No PHI)</span>
+              <input type="text" id="meta-cohortSummary" data-meta-key="cohortSummary" class="input" placeholder="e.g., n=640 across 4 centers (dev n=420, external n=220)">
+            </label>
+            <label class="field">
+              <span class="field__label">Auditor / Peer Reviewer</span>
+              <input type="text" id="meta-reviewer" data-meta-key="reviewer" class="input" placeholder="e.g., Peer Review Studio">
+            </label>
+          </div>
+        </details>
+      </div>
+
+      <!-- Critical Blocker Warning Banner (visible when any Critical Blocker fails) -->
+      <div id="audit-blocker-banner" class="blocker-banner" role="alert" hidden></div>
+
+      <!-- Two-Column Studio Grid -->
+      <div class="studio-grid studio-grid--audit">
+        <!-- Left: Domain-Filtered 36-Item Checklist -->
+        <div class="studio-col studio-col--primary">
+          <div class="card card--compact checklist-toolbar">
+            <div id="audit-domain-pills" class="domain-pills" role="tablist" aria-label="Filter by audit domain"></div>
+
+            <div class="checklist-filters">
+              <label class="filter-field">
+                <span class="sr-only">Filter by severity</span>
+                <select id="audit-severity-filter" class="select select--sm" aria-label="Filter by severity">
+                  <option value="all">All Severities (36)</option>
+                  <option value="critical">Critical Blockers Only (11)</option>
+                  <option value="major">Major (17)</option>
+                  <option value="recommended">Recommended (8)</option>
+                </select>
+              </label>
+
+              <label class="filter-field">
+                <span class="sr-only">Filter by response status</span>
+                <select id="audit-status-filter" class="select select--sm" aria-label="Filter by status">
+                  <option value="all">All Statuses</option>
+                  <option value="fail">Failed</option>
+                  <option value="partial">Partial</option>
+                  <option value="pass">Pass</option>
+                  <option value="na">N/A</option>
+                  <option value="unanswered">Unanswered</option>
+                </select>
+              </label>
+
+              <label class="filter-field filter-field--search">
+                <span class="sr-only">Search checklist items</span>
+                <input type="search" id="audit-search-input" class="input input--sm" placeholder="Search ID, keyword, CLAIM-19, TRIPOD+AI..." aria-label="Search checklist items">
+              </label>
+
+              <span id="audit-visible-count" class="count-pill">36 / 36</span>
+            </div>
+          </div>
+
+          <div id="audit-checklist-container" class="checklist-list"></div>
+        </div>
+
+        <!-- Right Sticky: Live Rigor Scorecard, 6-Axis Radar Chart & Export Studio -->
+        <aside class="studio-col studio-col--sticky" aria-label="Neuro-AI rigor scorecard and exports">
+          <div id="audit-scorecard" class="card scorecard" aria-live="polite"></div>
+
+          <div class="card">
+            <div class="card__header card__header--tight">
+              <div>
+                <span class="eyebrow">Domain Rigor Profile</span>
+                <h3 class="card__title">6-Axis Methodological Radar</h3>
+              </div>
+              <span class="mono-tag">0–100%</span>
+            </div>
+            <div id="audit-radar-chart" class="svg-stage"></div>
+          </div>
+
+          <div class="card export-studio">
+            <div class="card__header card__header--tight">
+              <div>
+                <span class="eyebrow">Peer-Review Deliverables</span>
+                <h3 class="card__title">Publication Export Studio</h3>
+              </div>
+              <span class="mono-tag">LOCAL EXPORT</span>
+            </div>
+
+            <div class="badge-preview-box">
+              <span class="badge-preview-box__label">Standalone Rigor Badge Preview (420&times;36 SVG)</span>
+              <div id="audit-badge-preview" class="badge-preview-box__stage"></div>
+            </div>
+
+            <div class="export-actions-grid">
+              <button type="button" id="audit-dl-md-btn" class="btn btn--primary btn--sm">
+                Download Markdown (.md)
+              </button>
+              <button type="button" id="audit-copy-md-btn" class="btn btn--secondary btn--sm">
+                Copy Markdown
+              </button>
+              <button type="button" id="audit-dl-tex-btn" class="btn btn--primary btn--sm">
+                Download LaTeX (.tex)
+              </button>
+              <button type="button" id="audit-copy-tex-btn" class="btn btn--secondary btn--sm">
+                Copy LaTeX
+              </button>
+              <button type="button" id="audit-dl-svg-btn" class="btn btn--secondary btn--sm export-actions-grid__full">
+                Download Rigor Badge (.svg)
+              </button>
+            </div>
+
+            <details class="export-preview-disclosure" id="audit-export-preview-disclosure">
+              <summary class="export-preview-disclosure__summary">Inspect Export Source Preview</summary>
+              <div class="export-preview-tabs">
+                <button type="button" class="mini-tab is-active" data-preview-fmt="md">Markdown</button>
+                <button type="button" class="mini-tab" data-preview-fmt="tex">LaTeX (longtable)</button>
+              </div>
+              <pre id="audit-export-preview-code" class="code-preview"></pre>
+            </details>
+          </div>
+
+          <div id="audit-standards-card" class="card card--compact standards-card"></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- Studio Footer -->
+  <footer class="studio-footer">
+    <div class="studio-footer__inner">
+      <p>
+        <strong>CNS5-Audit</strong> &mdash; Open-access, zero-build clinical research &amp; peer-review studio.
+        Standards: WHO CNS5 (Louis et al., <em>Neuro-Oncology</em> 2021), RANO 2.0 (Wen et al., <em>JCO</em> 2023),
+        RANO-BM (Lin et al., <em>Lancet Oncol</em> 2015), RANO-Resect (Karschnia et al., <em>Neuro-Oncology</em> 2023),
+        CLAIM 2024 (Tejani et al., <em>Radiology: AI</em> 2024), TRIPOD+AI (Collins et al., <em>BMJ</em> 2024).
+      </p>
+      <p class="studio-footer__disclaimer">
+        For Research &amp; Educational Use Only &mdash; Not a Certified Medical Device (Non-SaMD). 100% Browser-Local &middot; Zero PHI Uploads.
+      </p>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Region -->
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

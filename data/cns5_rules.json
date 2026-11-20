@@ -1,0 +1,1143 @@
+{
+  "schemaVersion": "1.0.0",
+  "standard": "WHO Classification of Tumours of the Central Nervous System, 5th Edition (CNS5, 2021)",
+  "gradingConvention": {
+    "numerals": "Arabic (1, 2, 3, 4) or Not assigned",
+    "note": "WHO CNS5 replaced Roman numerals with Arabic numerals across all CNS tumor types, adopted within-tumor-type grading (e.g., Astrocytoma, IDH-mutant, CNS WHO grade 2, 3, or 4), and integrated molecular hallmarks that can establish CNS WHO grade 3 or 4 independent of histology."
+  },
+  "nosNecGuidance": {
+    "NOS": {
+      "label": "Not Otherwise Specified (NOS)",
+      "definition": "Indicates that diagnostic information (typically molecular testing) required to assign a specific WHO CNS5 entity is unavailable, not performed, or failed technically.",
+      "action": "Recommend reflex molecular testing (IDH1/2 sequencing, 1p/19q FISH/NGS, CDKN2A/B, TERT/EGFR/+7/-10, H3/MAPK/fusion panel, or genome-wide DNA methylation profiling)."
+    },
+    "NEC": {
+      "label": "Not Elsewhere Classified (NEC)",
+      "definition": "Indicates that required diagnostic testing was successfully performed, but the integrated histological-molecular results are discordant or do not conform to any recognized WHO CNS5 diagnosis.",
+      "action": "Perform orthogonal confirmation (e.g., whole-arm vs. partial 1p/19q copy-number analysis, RNA fusion sequencing, genome-wide DNA methylation classifier) and discuss at multidisciplinary neuro-oncology tumor board."
+    }
+  },
+  "families": [
+    {
+      "id": "adult_diffuse_glioma",
+      "categoryGroup": "Adult-type diffuse gliomas",
+      "label": "Adult-Type Diffuse Gliomas",
+      "shortLabel": "Adult Diffuse",
+      "description": "IDH-mutant astrocytoma (CNS WHO grade 2, 3, or 4), IDH-mutant and 1p/19q-codeleted oligodendroglioma (CNS WHO grade 2 or 3), and IDH-wildtype glioblastoma (CNS WHO grade 4, including molecular GBM).",
+      "entities": [
+        {
+          "id": "astrocytoma_idh_mut",
+          "name": "Astrocytoma, IDH-mutant",
+          "gradesAllowed": [2, 3, 4],
+          "molecularHallmarks": [
+            "IDH1 or IDH2 missense mutation (canonical IDH1 p.R132H or non-canonical IDH1/2)",
+            "1p/19q intact (or unequivocal ATRX loss obviating mandatory 1p/19q testing)",
+            "ATRX loss / mutation and TP53 mutation (typical astrocytic immunophenotype)",
+            "CDKN2A/B homozygous deletion (sufficient for CNS WHO grade 4 independent of necrosis or MVP)"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating astrocytic glioma",
+            "CNS WHO grade 2: well-differentiated, low mitotic activity, no necrosis or MVP",
+            "CNS WHO grade 3: focal or dispersed anaplasia and significant mitotic activity",
+            "CNS WHO grade 4: microvascular proliferation and/or necrosis (or CDKN2A/B homozygous deletion)"
+          ],
+          "companionNotes": [
+            "WHO CNS5 retired the term 'Glioblastoma, IDH-mutant' in favor of 'Astrocytoma, IDH-mutant, CNS WHO grade 4'.",
+            "Homozygous CDKN2A/B deletion automatically upgrades Astrocytoma, IDH-mutant to CNS WHO grade 4 even in histologically grade 2 or 3 tumors.",
+            "For residual or recurrent CNS WHO grade 2 IDH-mutant astrocytoma, evaluate vorasidenib (dual IDH1/2 inhibitor; INDIGO trial)."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "louis2018_cimpact2",
+            "brat2020_cimpact5",
+            "appay2019_cdkn2a",
+            "mellinghoff2023_indigo"
+          ]
+        },
+        {
+          "id": "oligodendroglioma_idh_mut_1p19q",
+          "name": "Oligodendroglioma, IDH-mutant and 1p/19q-codeleted",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "IDH1 or IDH2 mutation",
+            "Combined whole-arm 1p/19q codeletion",
+            "TERT promoter mutation (very frequent) and ATRX retained",
+            "CDKN2A/B homozygous deletion (adverse prognostic marker; may support CNS WHO grade 3 in histologically borderline/equivocal cases, but not an unconditional standalone molecular upgrade)"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating glioma with uniform rounded nuclei, perinuclear halos, and branching chicken-wire capillaries",
+            "CNS WHO grade 2: low mitotic activity, no MVP or necrosis",
+            "CNS WHO grade 3: brisk mitotic activity (>=6 mitoses/10 HPF or >=2.5/mm2), microvascular proliferation, and/or necrosis"
+          ],
+          "companionNotes": [
+            "WHO CNS5 retired the qualifier 'anaplastic'; grade 3 tumors are termed 'Oligodendroglioma, IDH-mutant and 1p/19q-codeleted, CNS WHO grade 3'.",
+            "Evaluate vorasidenib (INDIGO phase 3 trial) for residual or recurrent CNS WHO grade 2 disease.",
+            "Typically exhibits high sensitivity to alkylating chemotherapy (PCV or temozolomide) and near-universal MGMT promoter methylation."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "appay2019_cdkn2a",
+            "mellinghoff2023_indigo"
+          ]
+        },
+        {
+          "id": "gbm_idh_wt",
+          "name": "Glioblastoma, IDH-wildtype",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "IDH-wildtype and H3-wildtype",
+            "TERT promoter mutation (sufficient for molecular GBM grade 4)",
+            "EGFR gene amplification (sufficient for molecular GBM grade 4)",
+            "Combined gain of chromosome 7 and loss of chromosome 10 (+7/-10) (sufficient for molecular GBM grade 4)"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating astrocytic glioma",
+            "Microvascular proliferation (MVP)",
+            "Necrosis (pseudopalisading or geographic)"
+          ],
+          "companionNotes": [
+            "Molecular GBM rule (cIMPACT-NOW Update 3 / WHO CNS5): An adult IDH-wildtype diffuse astrocytic glioma lacking necrosis and MVP is classified as Glioblastoma, IDH-wildtype (CNS WHO grade 4) if >=1 of TERT promoter mutation, EGFR amplification, or +7/-10 copy-number change is present.",
+            "MGMT promoter methylation predicts improved overall survival and greater benefit from temozolomide alkylating chemotherapy (Stupp/Hegi).",
+            "In patients <55 years with negative IDH1 p.R132H IHC, IDH1/2 sequencing and H3 K27/G34 exclusion are recommended before finalizing IDH-wildtype status."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "brat2018_cimpact3",
+            "stupp2005",
+            "hegi2005",
+            "karschnia2023_resect"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pediatric_hgg",
+      "categoryGroup": "Pediatric-type diffuse high-grade gliomas",
+      "label": "Pediatric-Type Diffuse High-Grade Gliomas",
+      "shortLabel": "Pediatric HGG",
+      "description": "Diffuse midline glioma H3 K27-altered, diffuse hemispheric glioma H3 G34-mutant, diffuse pediatric-type HGG H3-wt/IDH-wt, and infant-type hemispheric glioma.",
+      "entities": [
+        {
+          "id": "dmg_h3k27_altered",
+          "name": "Diffuse midline glioma, H3 K27-altered",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "Global loss of nuclear H3 K27me3 (unifying epigenetic hallmark)",
+            "H3.3 (H3-3A) or H3.1/H3.2 (H3C2/H3C3) p.K28M (K27M) mutation",
+            "EZHIP overexpression (H3-wildtype DMG subtype)",
+            "EGFR mutation or amplification in midline/bithalamic DMG subtype"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating glioma centered in midline structures (pons/brainstem, thalamus, spinal cord)",
+            "Assigned CNS WHO grade 4 regardless of low-grade or bland biopsy histology"
+          ],
+          "companionNotes": [
+            "WHO CNS5 broadened 'H3 K27M-mutant' to 'H3 K27-altered' to encompass EZHIP-overexpressing and EGFR-mutant midline subtypes.",
+            "Strictly requires midline anatomic localization; non-midline H3 K27M-mutant gliomas should be reported with NEC/methylation review rather than automatically called DMG.",
+            "Evaluate clinical trial eligibility including dordaviprone (ONC201) and cellular/immunotherapy protocols."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "louis2018_cimpact2",
+            "louis2020_cimpact6",
+            "venneti2023_onc201"
+          ]
+        },
+        {
+          "id": "dhg_h3g34_mutant",
+          "name": "Diffuse hemispheric glioma, H3 G34-mutant",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "H3-3A p.G35R or p.G35V (G34R/G34V) missense mutation",
+            "ATRX loss/mutation and TP53 mutation (nearly universal)",
+            "OLIG2-negative immunophenotype and frequent MGMT promoter methylation"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating high-grade glioma of the cerebral hemispheres",
+            "Glioblastoma-like or embryonal/PNET-like high-grade morphology"
+          ],
+          "companionNotes": [
+            "Predominantly affects adolescents and young adults; always assigned CNS WHO grade 4.",
+            "High rate of MGMT promoter methylation supports evaluation of temozolomide-based regimens."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "louis2020_cimpact6"
+          ]
+        },
+        {
+          "id": "pedhgg_h3_idh_wt",
+          "name": "Diffuse pediatric-type high-grade glioma, H3-wildtype and IDH-wildtype",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "IDH-wildtype and H3-wildtype",
+            "DNA methylation classes: pHGG RTK1 (PDGFRA amp / radiation- or Lynch-associated), pHGG RTK2 (EGFR amp / TERT), or pHGG MYCN (MYCN amp)"
+          ],
+          "histologicHallmarks": [
+            "Diffusely infiltrating high-grade glioma in children or young adults",
+            "Brisk mitotic activity with or without microvascular proliferation and necrosis"
+          ],
+          "companionNotes": [
+            "Evaluate for constitutional mismatch repair deficiency (CMMRD) or Lynch syndrome (particularly in hypermutant pHGG RTK1), which may predict response to PD-1 checkpoint blockade.",
+            "pHGG MYCN carries the poorest prognosis among the three methylation subclasses."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "capper2018_methylation"
+          ]
+        },
+        {
+          "id": "infant_hemispheric_glioma",
+          "name": "Infant-type hemispheric glioma",
+          "gradesAllowed": ["Not assigned"],
+          "molecularHallmarks": [
+            "Recurrent receptor tyrosine kinase (RTK) gene fusions involving NTRK1/2/3, ROS1, ALK, or MET",
+            "Distinct infant hemispheric glioma DNA methylation signature"
+          ],
+          "histologicHallmarks": [
+            "Cellular, often high-grade-appearing astrocytic glioma arising in the cerebral hemispheres during infancy/early childhood",
+            "Frequent sharp circumscription or palisading necrosis despite favorable targeted-therapy outcomes"
+          ],
+          "companionNotes": [
+            "Actionable RTK fusions enable targeted kinase inhibitor therapy (e.g., larotrectinib/entrectinib for NTRK/ROS1; alectinib/lorlatinib for ALK), potentially avoiding cranial irradiation in infants.",
+            "No formal CNS WHO grade is assigned in WHO CNS5 given distinct natural history and targeted therapy responsiveness."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "clarke2020_infant"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pediatric_lgg",
+      "categoryGroup": "Pediatric-type diffuse low-grade gliomas",
+      "label": "Pediatric-Type Diffuse Low-Grade Gliomas",
+      "shortLabel": "Pediatric LGG",
+      "description": "IDH-wildtype and H3-wildtype pediatric-type diffuse low-grade gliomas driven by MYB/MYBL1 or MAPK pathway alterations (including angiocentric glioma and PLNTY).",
+      "entities": [
+        {
+          "id": "diffuse_astrocytoma_myb_mybl1",
+          "name": "Diffuse astrocytoma, MYB- or MYBL1-altered",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "Structural alteration (fusion or amplification/rearrangement) of MYB or MYBL1",
+            "IDH-wildtype and H3-wildtype"
+          ],
+          "histologicHallmarks": [
+            "Monomorphic, diffusely infiltrating astrocytic cells in cerebral cortex/white matter",
+            "Low cellularity, absent or rare mitoses, no necrosis or MVP; often epileptogenic"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1 with generally indolent clinical course and high rates of seizure freedom after surgical resection."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2019_cimpact4"
+          ]
+        },
+        {
+          "id": "angiocentric_glioma",
+          "name": "Angiocentric glioma",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "MYB::QKI gene fusion (canonical alteration in the vast majority of cases)",
+            "IDH-wildtype and H3-wildtype"
+          ],
+          "histologicHallmarks": [
+            "Bipolar spindle-shaped glial cells forming perivascular angiocentric rosettes",
+            "Subpial palisading and dot-like EMA positivity"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1; strongly associated with medically refractory epilepsy in children and young adults."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2019_cimpact4"
+          ]
+        },
+        {
+          "id": "plnty",
+          "name": "Polymorphous low-grade neuroepithelial tumor of the young (PLNTY)",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "MAPK pathway alteration: BRAF p.V600E mutation or FGFR2/FGFR3 gene fusion (e.g., FGFR2::CTNNA3, FGFR3::TACC3)",
+            "IDH-wildtype and 1p/19q intact"
+          ],
+          "histologicHallmarks": [
+            "Infiltrative oligodendroglioma-like components with frequent prominent calcifications",
+            "Strong diffuse regional CD34 immunoreactivity in tumor cells and ramified cortical neural elements"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1; overwhelmingly epileptogenic and typically located in the temporal lobe of children and young adults."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "huse2017_plnty"
+          ]
+        },
+        {
+          "id": "diffuse_lgg_mapk_altered",
+          "name": "Diffuse low-grade glioma, MAPK pathway-altered",
+          "gradesAllowed": ["Not assigned"],
+          "molecularHallmarks": [
+            "MAPK pathway driver: BRAF p.V600E, FGFR1 TKD duplication/mutation/fusion, BRAF fusion, NF1, or other MAPK alteration",
+            "IDH-wildtype, H3-wildtype, and CDKN2A/B intact"
+          ],
+          "histologicHallmarks": [
+            "Diffuse low-grade astrocytic or oligodendroglioma-like morphology without high-grade anaplasia",
+            "Absence of classic PLNTY or angiocentric glioma diagnostic features"
+          ],
+          "companionNotes": [
+            "WHO CNS5 recommends reporting the specific molecular alteration (e.g., FGFR1-mutant or BRAF V600E-mutant) to guide targeted MAPK therapy.",
+            "For BRAF V600E-mutant pediatric LGG, dabrafenib + trametinib is FDA-approved; for BRAF fusions, evaluate type 2 pan-RAF inhibition (tovorafenib) or MEK inhibition and avoid type 1 BRAF monotherapy."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2019_cimpact4",
+            "bouffet2023",
+            "kilburn2024_firefly1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "circumscribed_astrocytic",
+      "categoryGroup": "Circumscribed astrocytic gliomas",
+      "label": "Circumscribed Astrocytic Gliomas",
+      "shortLabel": "Circumscribed",
+      "description": "Pilocytic astrocytoma, high-grade astrocytoma with piloid features (HGAP), pleomorphic xanthoastrocytoma (PXA), SEGA, chordoid glioma, and MN1-altered astroblastoma.",
+      "entities": [
+        {
+          "id": "pilocytic_astrocytoma",
+          "name": "Pilocytic astrocytoma",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "KIAA1549::BRAF gene fusion (most common, especially posterior fossa)",
+            "Alternative MAPK drivers: NF1 inactivation (optic pathway), BRAF p.V600E, FGFR1, PTPN11, RAF1 fusions"
+          ],
+          "histologicHallmarks": [
+            "Biphasic compact piloid and loose microcystic architecture",
+            "Rosenthal fibers and eosinophilic granular bodies"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1; microvascular proliferation and occasional necrosis do not confer high-grade status in classic pilocytic astrocytoma.",
+            "If CDKN2A/B homozygous deletion and anaplastic features are present (especially in adults), evaluate DNA methylation for HGAP."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "bouffet2023",
+            "kilburn2024_firefly1"
+          ]
+        },
+        {
+          "id": "hgap",
+          "name": "High-grade astrocytoma with piloid features",
+          "gradesAllowed": ["Not assigned"],
+          "molecularHallmarks": [
+            "Characteristic HGAP genome-wide DNA methylation profile (essential criterion)",
+            "Frequent triad of MAPK pathway alteration (NF1/BRAF/FGFR1), CDKN2A/B homozygous deletion, and ATRX loss/mutation"
+          ],
+          "histologicHallmarks": [
+            "Astrocytic glioma with variable piloid features, Rosenthal fibers, and high-grade mitotic activity/necrosis/MVP",
+            "Frequently arises in the cerebellum of adults"
+          ],
+          "companionNotes": [
+            "First newly recognized WHO CNS5 entity whose definitive diagnosis requires DNA methylation profiling.",
+            "Clinical outcome roughly parallels CNS WHO grade 3 IDH-mutant astrocytoma, though formal CNS WHO grade is not yet assigned."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "reinhardt2018_hgap",
+            "capper2018_methylation"
+          ]
+        },
+        {
+          "id": "pxa",
+          "name": "Pleomorphic xanthoastrocytoma",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "BRAF p.V600E mutation (~60-80% of cases) or other MAPK alteration",
+            "CDKN2A/B homozygous deletion (~90% of cases)"
+          ],
+          "histologicHallmarks": [
+            "Circumscribed superficial/meningocortical glioma with pleomorphic, lipidized xanthomatous cells, eosinophilic granular bodies, and pericellular reticulin network",
+            "CNS WHO grade 3 defined by >=5 mitoses per 10 HPF (>=2.5 mitoses/mm2)"
+          ],
+          "companionNotes": [
+            "WHO CNS5 retired the modifier 'anaplastic'; tumors meeting the mitotic threshold are classified as Pleomorphic xanthoastrocytoma, CNS WHO grade 3.",
+            "Evaluate BRAF/MEK targeted therapy in recurrent or unresectable BRAF V600E-mutant PXA."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "bouffet2023"
+          ]
+        },
+        {
+          "id": "sega",
+          "name": "Subependymal giant cell astrocytoma",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "Biallelic inactivation of TSC1 or TSC2 leading to constitutive mTORC1 activation"
+          ],
+          "histologicHallmarks": [
+            "Well-circumscribed intraventricular tumor near the foramen of Monro",
+            "Large ganglion-like/gemistocytic astrocytes with abundant glassy eosinophilic cytoplasm and calcifications"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1; clinical hallmark of Tuberous Sclerosis Complex (TSC).",
+            "mTOR inhibitor everolimus is FDA-approved for TSC-associated SEGA requiring therapeutic intervention when curative resection is not feasible."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "franz2013_exist1"
+          ]
+        },
+        {
+          "id": "chordoid_glioma",
+          "name": "Chordoid glioma",
+          "gradesAllowed": [2],
+          "molecularHallmarks": [
+            "Recurrent PRKCA p.D463H missense mutation (hallmark driver)"
+          ],
+          "histologicHallmarks": [
+            "Well-circumscribed anterior third ventricular tumor",
+            "Cords and clusters of GFAP-positive, TTF1-positive epithelioid tumor cells within mucinous stroma with lymphoplasmacytic infiltrate"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 2; despite slow growth, surgical morbidity is high due to hypothalamic proximity."
+          ],
+          "referenceIds": [
+            "louis2021"
+          ]
+        },
+        {
+          "id": "astroblastoma_mn1",
+          "name": "Astroblastoma, MN1-altered",
+          "gradesAllowed": ["Not assigned"],
+          "molecularHallmarks": [
+            "Structural rearrangement of MN1 (most commonly MN1::BEND2 or MN1::CXXC5 fusion)",
+            "Distinct CNS HGNET-MN1 DNA methylation class"
+          ],
+          "histologicHallmarks": [
+            "Circumscribed hemispheric tumor predominantly in children/young women",
+            "Prominent astroblastic perivascular pseudorosettes with broad, stout processes and vascular hyalinization"
+          ],
+          "companionNotes": [
+            "No formal CNS WHO grade is assigned in WHO CNS5; local recurrences are common, though overall survival is often prolonged."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "sturm2016_mn1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ependymal_tumor",
+      "categoryGroup": "Ependymal tumors",
+      "label": "Ependymal Tumors",
+      "shortLabel": "Ependymal",
+      "description": "Anatomically and molecularly defined ependymomas across supratentorial, posterior fossa, and spinal compartments, plus myxopapillary ependymoma (CNS WHO grade 2) and subependymoma (grade 1).",
+      "entities": [
+        {
+          "id": "supratentorial_ependymoma_zfta",
+          "name": "Supratentorial ependymoma, ZFTA fusion-positive",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "ZFTA (formerly C11orf95) gene fusion, most commonly ZFTA::RELA or alternative partners (MAML2, NCOA1/2)",
+            "CDKN2A homozygous deletion (adverse prognostic modifier)"
+          ],
+          "histologicHallmarks": [
+            "Supratentorial ependymoma with perivascular pseudorosettes, clear-cell or branching capillary areas",
+            "CNS WHO grade 2 vs. grade 3 determined by mitotic activity, microvascular proliferation, and cellularity/anaplasia"
+          ],
+          "companionNotes": [
+            "WHO CNS5 replaced 'RELA fusion-positive' with 'ZFTA fusion-positive' to capture non-RELA ZFTA fusion partners.",
+            "Generally carries worse progression-free survival than YAP1 fusion-positive supratentorial ependymoma."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        },
+        {
+          "id": "supratentorial_ependymoma_yap1",
+          "name": "Supratentorial ependymoma, YAP1 fusion-positive",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "YAP1 gene fusion, most commonly YAP1::MAMLD1 or YAP1::FAM118B"
+          ],
+          "histologicHallmarks": [
+            "Supratentorial ependymoma arising predominantly in infants and young children",
+            "Perivascular pseudorosettes; CNS WHO grade 2 or 3 by histological anaplasia"
+          ],
+          "companionNotes": [
+            "Associated with a distinctly favorable prognosis compared to ZFTA fusion-positive supratentorial ependymoma."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        },
+        {
+          "id": "pfa_ependymoma",
+          "name": "Posterior fossa group A (PFA) ependymoma",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "Global loss of nuclear H3 K27me3 (typically driven by EZHIP overexpression)",
+            "PFA DNA methylation profile",
+            "Chromosome 1q gain and 6q loss (high-risk prognostic markers)"
+          ],
+          "histologicHallmarks": [
+            "Posterior fossa ependymoma with perivascular pseudorosettes and/or true ependymal rosettes",
+            "CNS WHO grade 2 or 3 based on mitotic activity and anaplastic features"
+          ],
+          "companionNotes": [
+            "Predominantly occurs in infants and young children; carries significantly higher recurrence risk and worse survival than PFB ependymoma."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        },
+        {
+          "id": "pfb_ependymoma",
+          "name": "Posterior fossa group B (PFB) ependymoma",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "Retained nuclear H3 K27me3 immunostaining",
+            "PFB DNA methylation profile with frequent broad chromosomal instability"
+          ],
+          "histologicHallmarks": [
+            "Posterior fossa ependymoma predominantly in older children and adults",
+            "CNS WHO grade 2 or 3 based on histological features"
+          ],
+          "companionNotes": [
+            "Significantly more favorable prognosis than PFA ependymoma; maximal safe resection is a primary determinant of long-term control."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        },
+        {
+          "id": "spinal_ependymoma",
+          "name": "Spinal ependymoma",
+          "gradesAllowed": [2, 3],
+          "molecularHallmarks": [
+            "Chromosome 22q loss and NF2 mutation (frequent)",
+            "Absence of MYCN amplification"
+          ],
+          "histologicHallmarks": [
+            "Circumscribed intramedullary spinal cord ependymoma with perivascular pseudorosettes",
+            "CNS WHO grade 2 or 3 based on mitotic activity and anaplasia"
+          ],
+          "companionNotes": [
+            "Evaluate for NF2-related schwannomatosis in young patients or those with multifocal spinal tumors."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        },
+        {
+          "id": "spinal_ependymoma_mycn",
+          "name": "Spinal ependymoma, MYCN-amplified",
+          "gradesAllowed": ["Not assigned"],
+          "molecularHallmarks": [
+            "High-level MYCN gene amplification (essential diagnostic criterion)",
+            "Distinct DNA methylation class separate from conventional spinal ependymoma"
+          ],
+          "histologicHallmarks": [
+            "Predominantly extramedullary/intradural cervicothoracic spinal ependymoma with high-grade histological features",
+            "Brisk mitoses, microvascular proliferation, necrosis, and strong MYCN nuclear protein expression"
+          ],
+          "companionNotes": [
+            "Newly defined aggressive WHO CNS5 molecular entity with high rates of early recurrence and leptomeningeal dissemination despite surgical resection."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "ghasemi2019_mycn_spinal"
+          ]
+        },
+        {
+          "id": "myxopapillary_ependymoma",
+          "name": "Myxopapillary ependymoma",
+          "gradesAllowed": [2],
+          "molecularHallmarks": [
+            "Distinct myxopapillary ependymoma DNA methylation profile (often with chromosomal instability/gains)"
+          ],
+          "histologicHallmarks": [
+            "Tumor of the conus medullaris, cauda equina, or filum terminale",
+            "Radial arrangement of cuboidal-to-elongated GFAP-positive cells around vascularized myxoid/hyalinized stromal cores"
+          ],
+          "companionNotes": [
+            "WHO CNS5 upgraded Myxopapillary ependymoma from grade 1 (2016 4th edition update) to CNS WHO grade 2 due to recurrence rates comparable to conventional spinal ependymoma."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7"
+          ]
+        },
+        {
+          "id": "subependymoma",
+          "name": "Subependymoma",
+          "gradesAllowed": [1],
+          "molecularHallmarks": [
+            "Compartment-specific subependymoma DNA methylation classes (supratentorial, posterior fossa, spinal); TERT promoter mutations may occur in a subset without altering grade"
+          ],
+          "histologicHallmarks": [
+            "Clusters of uniform bland glial nuclei embedded in a dense fibrillary matrix with microcysts",
+            "Absent or negligible mitotic activity"
+          ],
+          "companionNotes": [
+            "Assigned CNS WHO grade 1 with excellent prognosis; frequently incidental or cured by resection."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "ellison2020_cimpact7",
+            "pajtler2015_ependymoma"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "meningioma",
+      "categoryGroup": "Meningiomas",
+      "label": "Meningiomas",
+      "shortLabel": "Meningioma",
+      "description": "Single WHO CNS5 tumor type with 15 histological subtypes graded CNS WHO grade 1, 2, or 3 using combined histological criteria and molecular grade 3 drivers (TERT promoter mutation or CDKN2A/B homozygous deletion).",
+      "entities": [
+        {
+          "id": "meningioma",
+          "name": "Meningioma",
+          "gradesAllowed": [1, 2, 3],
+          "molecularHallmarks": [
+            "TERT promoter mutation (automatic CNS WHO grade 3 independent of histology)",
+            "CDKN2A/B homozygous deletion (automatic CNS WHO grade 3 independent of histology)",
+            "H3 K27me3 loss (adverse recurrence biomarker, especially in grade 1/2 meningiomas)",
+            "BAP1 loss (rhabdoid/high-grade meningioma; BAP1 predisposition syndrome)",
+            "SMARCE1 loss (clear cell meningioma; hereditary predisposition)",
+            "Subtype drivers: NF2 (convexity/fibrous/transitional), TRAF7/KLF4 (secretory), AKT1/SMO/PIK3CA (skull base)"
+          ],
+          "histologicHallmarks": [
+            "CNS WHO grade 1: <4 mitoses/10 HPF, no brain invasion, <3 atypical features, and non-chordoid/non-clear-cell subtype",
+            "CNS WHO grade 2: 4-19 mitoses/10 HPF, OR brain invasion, OR >=3 of 5 atypical features (hypercellularity, small cell change, prominent nucleoli, sheet-like growth, spontaneous necrosis), OR chordoid/clear cell subtype",
+            "CNS WHO grade 3: >=20 mitoses/10 HPF, OR frank anaplasia (sarcoma-/carcinoma-/melanoma-like), OR TERT promoter mutation / CDKN2A/B homozygous deletion"
+          ],
+          "companionNotes": [
+            "WHO CNS5 considers meningioma a single tumor type with 15 subtypes and applies grading criteria across all subtypes.",
+            "Major CNS5 update: Rhabdoid and papillary subtypes are NO LONGER automatically CNS WHO grade 3; they are graded using standard histological and molecular criteria.",
+            "TERT promoter mutation or CDKN2A/B homozygous deletion immediately establishes CNS WHO grade 3 regardless of benign-appearing histology."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "sahm2016_tert",
+            "sievers2020_cdkn2a",
+            "katz2018_h3k27me3_meningioma"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "medulloblastoma",
+      "categoryGroup": "Embryonal tumors",
+      "label": "Medulloblastomas",
+      "shortLabel": "Medulloblastoma",
+      "description": "Molecularly defined CNS WHO grade 4 embryonal tumors: WNT-activated, SHH-activated TP53-wildtype, SHH-activated TP53-mutant, and non-WNT/non-SHH (Group 3 / Group 4).",
+      "entities": [
+        {
+          "id": "mb_wnt",
+          "name": "Medulloblastoma, WNT-activated",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "CTNNB1 exon 3 activating mutation (or germline APC mutation in CTNNB1-wildtype cases)",
+            "Nuclear beta-catenin accumulation and monosomy 6",
+            "WNT DNA methylation class"
+          ],
+          "histologicHallmarks": [
+            "Predominantly classic medulloblastoma morphology arising in dorsal brainstem/cerebellopontine angle",
+            "Assigned CNS WHO grade 4"
+          ],
+          "companionNotes": [
+            "Most favorable medulloblastoma group (>90-95% 5-year survival in pediatric cohorts); focus of radiotherapy de-escalation trials.",
+            "Test for germline APC mutation (Turcot/FAP syndrome) if CTNNB1 sequencing is wildtype."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "taylor2012_mb"
+          ]
+        },
+        {
+          "id": "mb_shh_tp53_wt",
+          "name": "Medulloblastoma, SHH-activated and TP53-wildtype",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "SHH pathway activation (PTCH1, SMO, SUFU mutations; GLI2 amplification; TERT promoter mutation in adults)",
+            "TP53-wildtype",
+            "SHH DNA methylation subgroups (SHH-1 to SHH-4)"
+          ],
+          "histologicHallmarks": [
+            "Classic, desmoplastic/nodular, or medulloblastoma with extensive nodularity (MBEN); rarely large cell/anaplastic",
+            "Assigned CNS WHO grade 4"
+          ],
+          "companionNotes": [
+            "Evaluate for germline PTCH1 or SUFU mutations (Gorlin syndrome), particularly in infants and young children with desmoplastic/nodular or MBEN histology.",
+            "Intermediate overall prognosis; infants with desmoplastic/nodular or MBEN histology have favorable outcomes with radiation-sparing chemotherapy."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "taylor2012_mb",
+            "zhukova2013_shh_tp53"
+          ]
+        },
+        {
+          "id": "mb_shh_tp53_mut",
+          "name": "Medulloblastoma, SHH-activated and TP53-mutant",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "SHH pathway activation combined with somatic or germline TP53 mutation",
+            "Frequent chromothripsis and MYCN or GLI2 amplification"
+          ],
+          "histologicHallmarks": [
+            "Frequently large cell/anaplastic histology, typically in older children/adolescents",
+            "Assigned CNS WHO grade 4"
+          ],
+          "companionNotes": [
+            "Urgent cancer genetics referral for germline TP53 testing (Li-Fraumeni syndrome) is mandatory.",
+            "Very high-risk prognosis with heightened susceptibility to radiation-induced secondary malignancies in Li-Fraumeni carriers."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "taylor2012_mb",
+            "zhukova2013_shh_tp53"
+          ]
+        },
+        {
+          "id": "mb_non_wnt_non_shh",
+          "name": "Medulloblastoma, non-WNT/non-SHH",
+          "gradesAllowed": [4],
+          "molecularHallmarks": [
+            "Group 3 (MYC amplification, GFI1/GFI1B activation, isochromosome 17q) or Group 4 (PRDM6 activation, KDM6A, MYCN/CDK6 amplification, isochromosome 17q)",
+            "WHO CNS5 subdivides non-WNT/non-SHH into 8 molecular subgroups (subgroups 1-8) by DNA methylation profiling"
+          ],
+          "histologicHallmarks": [
+            "Classic or large cell/anaplastic histology",
+            "Assigned CNS WHO grade 4"
+          ],
+          "companionNotes": [
+            "MYC amplification (predominantly Group 3) and metastatic disease (M+) denote very high risk.",
+            "Group 4 is the most common medulloblastoma group overall and typically has intermediate prognosis."
+          ],
+          "referenceIds": [
+            "louis2021",
+            "taylor2012_mb",
+            "capper2018_methylation"
+          ]
+        }
+      ]
+    }
+  ],
+  "companionBiomarkers": {
+    "mgmt_methylated": {
+      "name": "MGMT Promoter Methylation",
+      "summary": "Associated with improved overall survival and greater benefit from temozolomide alkylating chemotherapy in Glioblastoma, IDH-wildtype (Stupp et al., NEJM 2005; Hegi et al., NEJM 2005)."
+    },
+    "vorasidenib_idh_grade2": {
+      "name": "Vorasidenib (Dual IDH1/2 Inhibitor)",
+      "summary": "INDIGO phase 3 trial (Mellinghoff et al., NEJM 2023) demonstrated significantly prolonged progression-free survival and time to next intervention in residual or recurrent CNS WHO grade 2 IDH-mutant glioma."
+    },
+    "braf_mek_pediatric_lgg": {
+      "name": "BRAF / MEK / Pan-RAF Targeted Therapy",
+      "summary": "Dabrafenib + trametinib is FDA-approved for BRAF V600E-mutant pediatric LGG (Bouffet et al., NEJM 2023); tovorafenib (type 2 pan-RAF inhibitor) is active across BRAF fusions (KIAA1549::BRAF) and BRAF V600E (FIREFLY-1)."
+    },
+    "rtk_fusion_infant": {
+      "name": "Actionable RTK Fusions (NTRK/ROS1/ALK/MET)",
+      "summary": "Infant-type hemispheric gliomas frequently harbor targetable receptor tyrosine kinase fusions (e.g., larotrectinib/entrectinib for NTRK/ROS1; alectinib/lorlatinib for ALK), enabling radiation-sparing systemic therapy."
+    },
+    "everolimus_sega": {
+      "name": "mTOR Inhibition (Everolimus)",
+      "summary": "FDA-approved systemic therapy for TSC-associated subependymal giant cell astrocytoma (SEGA) not amenable to curative surgical resection (EXIST-1 trial)."
+    },
+    "onc201_dmg": {
+      "name": "H3 K27-Altered Targeted & Clinical Trial Pathways",
+      "summary": "Evaluate for DRD2/ClpP agonist (dordaviprone/ONC201) trials, GD2 CAR-T therapy, and specialized pediatric/adult neuro-oncology clinical protocols."
+    },
+    "li_fraumeni_shh_tp53": {
+      "name": "Germline TP53 / Li-Fraumeni Counseling",
+      "summary": "Medulloblastoma, SHH-activated and TP53-mutant carries a high rate of germline TP53 mutation; refer urgently to cancer genetics and account for elevated radiation-induced secondary malignancy risk."
+    },
+    "cdkn2ab_idh_glioma": {
+      "name": "CDKN2A/B Homozygous Deletion in IDH-Mutant Glioma",
+      "summary": "Defines CNS WHO grade 4 in Astrocytoma, IDH-mutant regardless of histology (cIMPACT-NOW Update 5); in Oligodendroglioma, IDH-mutant and 1p/19q-codeleted, grading remains histological and CDKN2A/B homozygous deletion is an adverse prognostic marker that may support CNS WHO grade 3 only in histologically borderline/equivocal cases."
+    },
+    "tert_cdkn2ab_meningioma": {
+      "name": "TERT Promoter Mutation & CDKN2A/B Homozygous Deletion in Meningioma",
+      "summary": "Each biomarker independently establishes CNS WHO grade 3 meningioma in WHO CNS5, predicting rapid recurrence and poor survival even with histologically grade 1 morphology."
+    },
+    "h3k27me3_prognostic": {
+      "name": "H3 K27me3 Loss (Epigenetic Biomarker)",
+      "summary": "Defines Posterior fossa group A (PFA) ependymoma and H3 K27-altered DMG; in meningioma, H3 K27me3 loss predicts significantly higher recurrence risk."
+    }
+  },
+  "vignettes": [
+    {
+      "id": "vig_mol_gbm",
+      "label": "Molecular GBM (IDH-wt, TERT+, Histologically Low-Grade)",
+      "description": "64-year-old with non-enhancing diffusely infiltrating astrocytic glioma lacking necrosis and MVP, but IDH-wildtype with TERT promoter mutation and MGMT promoter methylation -> Molecular upgrade to Glioblastoma, IDH-wildtype, CNS WHO grade 4.",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "wildtype",
+        "codeletion_1p19q": "intact",
+        "atrx_status": "retained",
+        "tp53_status": "wildtype",
+        "cdkn2ab_homdel": "absent",
+        "tert_promoter": "mutant",
+        "egfr_amplification": "absent",
+        "chr7_gain_chr10_loss": "absent",
+        "necrosis": false,
+        "mvp": false,
+        "mitotic_activity_high": false,
+        "mgmt_promoter": "methylated",
+        "h3_tested_wildtype": "wildtype",
+        "age_years": 64
+      }
+    },
+    {
+      "id": "vig_mol_gbm_egfr",
+      "label": "Histologically Low-Grade IDH-wt Astrocytoma with EGFR Amp -> Molecular GBM Grade 4",
+      "description": "61-year-old with bland infiltrating astrocytoma (no necrosis, no MVP) harboring IDH-wildtype status, EGFR amplification, and +7/-10 copy-number change -> Glioblastoma, IDH-wildtype, CNS WHO grade 4.",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "wildtype",
+        "codeletion_1p19q": "intact",
+        "atrx_status": "retained",
+        "tp53_status": "wildtype",
+        "cdkn2ab_homdel": "not_tested",
+        "tert_promoter": "wildtype",
+        "egfr_amplification": "present",
+        "chr7_gain_chr10_loss": "present",
+        "necrosis": false,
+        "mvp": false,
+        "mitotic_activity_high": false,
+        "mgmt_promoter": "unmethylated",
+        "h3_tested_wildtype": "wildtype",
+        "age_years": 61
+      }
+    },
+    {
+      "id": "vig_astro_cdkn2ab_g4",
+      "label": "IDH-Mutant Astrocytoma with Homozygous CDKN2A/B Deletion -> Grade 4",
+      "description": "39-year-old with IDH1 R132H-mutant, ATRX-lost, 1p/19q-intact astrocytoma showing mitotic activity without necrosis or MVP, but homozygous CDKN2A/B deletion -> Molecular upgrade to Astrocytoma, IDH-mutant, CNS WHO grade 4.",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "mutant",
+        "codeletion_1p19q": "intact",
+        "atrx_status": "lost",
+        "tp53_status": "mutant",
+        "cdkn2ab_homdel": "present",
+        "tert_promoter": "wildtype",
+        "egfr_amplification": "absent",
+        "chr7_gain_chr10_loss": "absent",
+        "necrosis": false,
+        "mvp": false,
+        "mitotic_activity_high": true,
+        "mgmt_promoter": "methylated",
+        "h3_tested_wildtype": "wildtype",
+        "age_years": 39
+      }
+    },
+    {
+      "id": "vig_oligo_g2_vorasidenib",
+      "label": "IDH-Mutant 1p/19q-Codeleted Oligodendroglioma Grade 2 (Vorasidenib-Eligible)",
+      "description": "44-year-old with frontal non-enhancing glioma: IDH-mutant, 1p/19q-codeleted, ATRX retained, CDKN2A/B intact, low mitotic activity -> Oligodendroglioma, IDH-mutant and 1p/19q-codeleted, CNS WHO grade 2.",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "mutant",
+        "codeletion_1p19q": "codeleted",
+        "atrx_status": "retained",
+        "tp53_status": "wildtype",
+        "cdkn2ab_homdel": "absent",
+        "tert_promoter": "mutant",
+        "egfr_amplification": "absent",
+        "chr7_gain_chr10_loss": "absent",
+        "necrosis": false,
+        "mvp": false,
+        "mitotic_activity_high": false,
+        "mgmt_promoter": "methylated",
+        "h3_tested_wildtype": "wildtype",
+        "age_years": 44
+      }
+    },
+    {
+      "id": "vig_dmg_h3k27",
+      "label": "Midline H3 K27-Altered DMG Grade 4 (Low-Grade Biopsy Override)",
+      "description": "11-year-old with pontine/thalamic infiltrative lesion showing bland astrocytic histology on stereotactic biopsy, but H3 K27M mutation and global H3 K27me3 loss -> Diffuse midline glioma, H3 K27-altered, CNS WHO grade 4.",
+      "family": "pediatric_hgg",
+      "inputState": {
+        "family": "pediatric_hgg",
+        "anatomic_location": "midline",
+        "patient_age_group": "child_adolescent",
+        "h3_k27_status": "k27m_mutant",
+        "h3_k27me3_loss": "lost",
+        "h3_g34_status": "wildtype",
+        "idh_status": "wildtype",
+        "infant_rtk_fusion": "not_tested",
+        "pediatric_hgg_subtype": "none_or_untested",
+        "low_grade_histology_only": true
+      }
+    },
+    {
+      "id": "vig_meningioma_tert_g3",
+      "label": "Histologically Grade 1 Meningioma with TERT Promoter Mutation -> Grade 3",
+      "description": "58-year-old with recurrent convexity meningioma showing 1 mitosis/10 HPF, no brain invasion, and no atypical features, but harboring a TERT promoter mutation -> Molecular upgrade to Meningioma, CNS WHO grade 3.",
+      "family": "meningioma",
+      "inputState": {
+        "family": "meningioma",
+        "subtype": "meningothelial_or_common",
+        "mitoses_per_10hpf": 1,
+        "brain_invasion": false,
+        "atypical_features_count": 0,
+        "frank_anaplasia": false,
+        "tert_promoter": "mutant",
+        "cdkn2ab_homdel": "absent",
+        "h3k27me3_loss": "retained",
+        "bap1_loss": "retained",
+        "smarce1_loss": "retained"
+      }
+    },
+    {
+      "id": "vig_myxopapillary_g2",
+      "label": "Myxopapillary Ependymoma -> CNS WHO Grade 2 (CNS5 Upgrade)",
+      "description": "32-year-old with filum terminale mass showing papillary fronds with perivascular myxoid cores -> Myxopapillary ependymoma, CNS WHO grade 2 (upgraded from grade 1 in 2016).",
+      "family": "ependymal_tumor",
+      "inputState": {
+        "family": "ependymal_tumor",
+        "compartment": "spinal",
+        "histology_variant": "myxopapillary",
+        "anaplastic_features": false,
+        "st_fusion": "not_tested",
+        "pf_methylation_h3k27me3": "not_tested",
+        "mycn_amplification": "not_tested"
+      }
+    },
+    {
+      "id": "vig_mb_shh_tp53_mut",
+      "label": "Medulloblastoma, SHH-Activated and TP53-Mutant (Li-Fraumeni Counseling)",
+      "description": "10-year-old with cerebellar hemispheric tumor showing large cell/anaplastic histology, SHH activation, TP53 mutation, and MYCN amplification -> High-risk SHH TP53-mutant medulloblastoma, CNS WHO grade 4.",
+      "family": "medulloblastoma",
+      "inputState": {
+        "family": "medulloblastoma",
+        "molecular_group": "shh",
+        "tp53_status": "mutant",
+        "histology": "large_cell_anaplastic",
+        "non_wnt_subgroup": "unspecified",
+        "myc_mycn_amplification": "mycn_amp"
+      }
+    },
+    {
+      "id": "vig_adult_glioma_nos",
+      "label": "Glioblastoma, NOS (IDH Testing Not Performed)",
+      "description": "68-year-old with ring-enhancing temporal mass showing necrosis and microvascular proliferation where IDH molecular testing could not be completed due to depleted tissue -> Glioblastoma, NOS, CNS WHO grade 4.",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "not_tested",
+        "codeletion_1p19q": "not_tested",
+        "atrx_status": "not_tested",
+        "tp53_status": "not_tested",
+        "cdkn2ab_homdel": "not_tested",
+        "tert_promoter": "not_tested",
+        "egfr_amplification": "not_tested",
+        "chr7_gain_chr10_loss": "not_tested",
+        "necrosis": true,
+        "mvp": true,
+        "mitotic_activity_high": true,
+        "mgmt_promoter": "not_tested",
+        "h3_tested_wildtype": "not_tested",
+        "age_years": 68
+      }
+    },
+    {
+      "id": "vig_adult_glioma_nec",
+      "label": "Diffuse Astrocytic Glioma, IDH-Wildtype, NEC (Negative Molecular GBM Panel)",
+      "description": "47-year-old with histologically low-grade IDH-wildtype, H3-wildtype diffuse astrocytic glioma in which TERT promoter, EGFR amplification, and +7/-10 are all negative -> NEC (avoid forcing GBM; perform methylation profiling).",
+      "family": "adult_diffuse_glioma",
+      "inputState": {
+        "family": "adult_diffuse_glioma",
+        "idh_status": "wildtype",
+        "codeletion_1p19q": "intact",
+        "atrx_status": "retained",
+        "tp53_status": "wildtype",
+        "cdkn2ab_homdel": "absent",
+        "tert_promoter": "wildtype",
+        "egfr_amplification": "absent",
+        "chr7_gain_chr10_loss": "absent",
+        "necrosis": false,
+        "mvp": false,
+        "mitotic_activity_high": false,
+        "mgmt_promoter": "not_tested",
+        "h3_tested_wildtype": "wildtype",
+        "age_years": 47
+      }
+    }
+  ],
+  "references": {
+    "louis2021": {
+      "id": "louis2021",
+      "citation": "Louis DN, Perry A, Wesseling P, et al. The 2021 WHO Classification of Tumors of the Central Nervous System: a summary. Neuro-Oncology. 2021;23(8):1231-1251.",
+      "doi": "10.1093/neuonc/noab106"
+    },
+    "louis2018_cimpact1": {
+      "id": "louis2018_cimpact1",
+      "citation": "Louis DN, Wesseling P, Paulus W, et al. cIMPACT-NOW update 1: Not Otherwise Specified (NOS) and Not Elsewhere Classified (NEC). Acta Neuropathologica. 2018;135(3):481-484.",
+      "doi": "10.1007/s00401-018-1808-0"
+    },
+    "louis2018_cimpact2": {
+      "id": "louis2018_cimpact2",
+      "citation": "Louis DN, Giannini C, Capper D, et al. cIMPACT-NOW update 2: diagnostic clarifications for diffuse midline glioma, H3 K27M-mutant and diffuse astrocytoma/anaplastic astrocytoma, IDH-mutant. Acta Neuropathologica. 2018;135(4):639-642.",
+      "doi": "10.1007/s00401-018-1826-y"
+    },
+    "brat2018_cimpact3": {
+      "id": "brat2018_cimpact3",
+      "citation": "Brat DJ, Aldape K, Colman H, et al. cIMPACT-NOW update 3: recommended diagnostic criteria for diffuse astrocytic glioma, IDH-wildtype, with molecular features of glioblastoma (CNS WHO grade 4). Acta Neuropathologica. 2018;136(5):805-810.",
+      "doi": "10.1007/s00401-018-1913-0"
+    },
+    "ellison2019_cimpact4": {
+      "id": "ellison2019_cimpact4",
+      "citation": "Ellison DW, Hawkins C, Jones DTW, et al. cIMPACT-NOW update 4: diffuse gliomas characterized by MYB, MYBL1, or FGFR1 alterations or BRAFV600E mutation. Acta Neuropathologica. 2019;137(4):683-687.",
+      "doi": "10.1007/s00401-019-01987-0"
+    },
+    "brat2020_cimpact5": {
+      "id": "brat2020_cimpact5",
+      "citation": "Brat DJ, Aldape K, Colman H, et al. cIMPACT-NOW update 5: recommended grading criteria and terminologies for IDH-mutant astrocytomas. Acta Neuropathologica. 2020;139(3):603-608.",
+      "doi": "10.1007/s00401-020-02127-9"
+    },
+    "louis2020_cimpact6": {
+      "id": "louis2020_cimpact6",
+      "citation": "Louis DN, Wesseling P, Aldape K, et al. cIMPACT-NOW update 6: new entity and diagnostic principle recommendations of the cIMPACT-Utrecht meeting on future CNS tumor classification and grading. Brain Pathology. 2020;30(4):844-856.",
+      "doi": "10.1111/bpa.12832"
+    },
+    "ellison2020_cimpact7": {
+      "id": "ellison2020_cimpact7",
+      "citation": "Ellison DW, Aldape KD, Capper D, et al. cIMPACT-NOW update 7: advancing the molecular classification of ependymal tumors. Brain Pathology. 2020;30(5):863-866.",
+      "doi": "10.1111/bpa.12866"
+    },
+    "stupp2005": {
+      "id": "stupp2005",
+      "citation": "Stupp R, Mason WP, van den Bent MJ, et al. Radiotherapy plus concomitant and adjuvant temozolomide for glioblastoma. New England Journal of Medicine. 2005;352(10):987-996.",
+      "doi": "10.1056/NEJMoa043330"
+    },
+    "hegi2005": {
+      "id": "hegi2005",
+      "citation": "Hegi ME, Diserens AC, Gorlia T, et al. MGMT gene silencing and benefit from temozolomide in glioblastoma. New England Journal of Medicine. 2005;352(10):997-1003.",
+      "doi": "10.1056/NEJMoa043331"
+    },
+    "mellinghoff2023_indigo": {
+      "id": "mellinghoff2023_indigo",
+      "citation": "Mellinghoff IK, van den Bent MJ, Blumenthal DT, et al. Vorasidenib in IDH1- or IDH2-mutant low-grade glioma. New England Journal of Medicine. 2023;389(7):589-601.",
+      "doi": "10.1056/NEJMoa2304194"
+    },
+    "appay2019_cdkn2a": {
+      "id": "appay2019_cdkn2a",
+      "citation": "Appay R, Dehais C, Maurage CA, et al. CDKN2A homozygous deletion is a strong adverse prognosis factor in diffuse malignant IDH-mutant gliomas. Neuro-Oncology. 2019;21(12):1519-1528.",
+      "doi": "10.1093/neuonc/noz124"
+    },
+    "bouffet2023": {
+      "id": "bouffet2023",
+      "citation": "Bouffet E, Hansford JR, Garre ML, et al. Dabrafenib plus trametinib in pediatric glioma with BRAF V600 mutations. New England Journal of Medicine. 2023;389(12):1108-1120.",
+      "doi": "10.1056/NEJMoa2303815"
+    },
+    "kilburn2024_firefly1": {
+      "id": "kilburn2024_firefly1",
+      "citation": "Kilburn LB, Khuong-Quang DA, Hansford JR, et al. The type 2 RAF inhibitor tovorafenib in relapsed/refractory pediatric low-grade glioma: the phase 2 FIREFLY-1 trial. Nature Medicine. 2024;30(1):207-217.",
+      "doi": "10.1038/s41591-023-02668-y"
+    },
+    "sahm2016_tert": {
+      "id": "sahm2016_tert",
+      "citation": "Sahm F, Schrimpf D, Olar A, et al. TERT promoter mutations and risk of recurrence in meningioma. Journal of the National Cancer Institute. 2016;108(5):djv377.",
+      "doi": "10.1093/jnci/djv377"
+    },
+    "sievers2020_cdkn2a": {
+      "id": "sievers2020_cdkn2a",
+      "citation": "Sievers P, Hielscher T, Schrimpf D, et al. CDKN2A/B homozygous deletion is associated with early recurrence in meningiomas. Acta Neuropathologica. 2020;140(3):409-413.",
+      "doi": "10.1007/s00401-020-02188-w"
+    },
+    "katz2018_h3k27me3_meningioma": {
+      "id": "katz2018_h3k27me3_meningioma",
+      "citation": "Katz LM, Hielscher T, Liechty B, et al. Loss of histone H3K27me3 identifies a subset of meningiomas with increased risk of recurrence. Acta Neuropathologica. 2018;135(6):955-963.",
+      "doi": "10.1007/s00401-018-1844-9"
+    },
+    "pajtler2015_ependymoma": {
+      "id": "pajtler2015_ependymoma",
+      "citation": "Pajtler KW, Witt H, Sill M, et al. Molecular classification of ependymal tumors across all CNS compartments, histopathological grades, and age groups. Cancer Cell. 2015;27(5):728-743.",
+      "doi": "10.1016/j.ccell.2015.04.002"
+    },
+    "ghasemi2019_mycn_spinal": {
+      "id": "ghasemi2019_mycn_spinal",
+      "citation": "Ghasemi DR, Sill M, Okonechnikov K, et al. MYCN amplification drives an aggressive form of spinal ependymoma. Acta Neuropathologica. 2019;138(6):1075-1089.",
+      "doi": "10.1007/s00401-019-02056-2"
+    },
+    "taylor2012_mb": {
+      "id": "taylor2012_mb",
+      "citation": "Taylor MD, Northcott PA, Korshunov A, et al. Molecular subgroups of medulloblastoma: the current consensus. Acta Neuropathologica. 2012;123(4):465-472.",
+      "doi": "10.1007/s00401-011-0922-z"
+    },
+    "zhukova2013_shh_tp53": {
+      "id": "zhukova2013_shh_tp53",
+      "citation": "Zhukova N, Ramaswamy V, Remke M, et al. Subgroup-specific prognostic implications of TP53 mutation in medulloblastoma. Journal of Clinical Oncology. 2013;31(23):2927-2935.",
+      "doi": "10.1200/JCO.2012.48.5052"
+    },
+    "capper2018_methylation": {
+      "id": "capper2018_methylation",
+      "citation": "Capper D, Jones DTW, Sill M, et al. DNA methylation-based classification of central nervous system tumours. Nature. 2018;555(7697):469-474.",
+      "doi": "10.1038/nature26000"
+    },
+    "clarke2020_infant": {
+      "id": "clarke2020_infant",
+      "citation": "Clarke M, Mackay A, Ismer B, et al. Infant high-grade gliomas comprise multiple subgroups characterized by novel targetable gene fusions and favorable outcomes. Cancer Discovery. 2020;10(7):942-963.",
+      "doi": "10.1158/2159-8290.CD-19-1030"
+    },
+    "venneti2023_onc201": {
+      "id": "venneti2023_onc201",
+      "citation": "Venneti S, Kawakibi AR, Ji S, et al. Clinical efficacy of ONC201 in H3K27M-mutant diffuse midline gliomas is driven by disruption of integrated metabolic and epigenetic pathways. Cancer Discovery. 2023;13(11):2370-2393.",
+      "doi": "10.1158/2159-8290.CD-23-0131"
+    },
+    "franz2013_exist1": {
+      "id": "franz2013_exist1",
+      "citation": "Franz DN, Belousova E, Sparagana S, et al. Efficacy and safety of everolimus for subependymal giant cell astrocytomas associated with tuberous sclerosis complex (EXIST-1): a multicentre, randomised, placebo-controlled phase 3 trial. The Lancet. 2013;381(9861):125-132.",
+      "doi": "10.1016/S0140-6736(12)61134-9"
+    },
+    "reinhardt2018_hgap": {
+      "id": "reinhardt2018_hgap",
+      "citation": "Reinhardt A, Stichel D, Schrimpf D, et al. Anaplastic astrocytoma with piloid features, a novel molecular class of IDH wildtype glioma with recurrent MAPK pathway, CDKN2A/B and ATRX alterations. Acta Neuropathologica. 2018;136(2):273-291.",
+      "doi": "10.1007/s00401-018-1837-8"
+    },
+    "huse2017_plnty": {
+      "id": "huse2017_plnty",
+      "citation": "Huse JT, Snuderl M, Jones DTW, et al. Polymorphous low-grade neuroepithelial tumor of the young (PLNTY): an epileptogenic neoplasm with oligodendroglioma-like components, aberrant CD34 expression, and genetic alterations involving the MAP kinase pathway. Acta Neuropathologica. 2017;133(3):417-429.",
+      "doi": "10.1007/s00401-016-1639-9"
+    },
+    "sturm2016_mn1": {
+      "id": "sturm2016_mn1",
+      "citation": "Sturm D, Orr BA, Toprak UH, et al. New brain tumor entities emerge from molecular classification of CNS-PNETs. Cell. 2016;164(5):1060-1072.",
+      "doi": "10.1016/j.cell.2016.01.015"
+    },
+    "karschnia2023_resect": {
+      "id": "karschnia2023_resect",
+      "citation": "Karschnia P, Young JS, Dono A, et al. Prognostic validation of a new classification system for extent of resection in glioblastoma: a report of the RANO resect group. Neuro-Oncology. 2023;25(5):940-954.",
+      "doi": "10.1093/neuonc/noac193"
+    }
+  }
+}
